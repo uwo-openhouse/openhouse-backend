@@ -12,17 +12,31 @@ Globals:
 
 Resources:
   # Lambda Functions & API Events
+
   BuildingsFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: buildings/
       Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref BuildingsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BuildingsTable
       Events:
         Gateway:
           Type: Api
           Properties:
             Path: /buildings
             Method: ANY
+        GatewayParam:
+          Type: Api
+          Properties:
+            Path: /buildings/{uuid}
+            Method: ANY
+    DependsOn: BuildingsTable
+
   DepartmentsFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -36,6 +50,7 @@ Resources:
             Method: ANY
 
   # DynamoDB Tables
+
   BuildingsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -47,6 +62,7 @@ Resources:
         - AttributeName: UUID
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
+
   DepartmentsTable:
     Type: AWS::DynamoDB::Table
     Properties:
