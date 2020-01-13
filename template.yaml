@@ -42,12 +42,24 @@ Resources:
     Properties:
       CodeUri: departments/
       Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DepartmentsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref DepartmentsTable
       Events:
         Gateway:
           Type: Api
           Properties:
             Path: /departments
             Method: ANY
+        GatewayParam:
+          Type: Api
+          Properties:
+            Path: /departments/{uuid}
+            Method: ANY
+    DependsOn: DepartmentsTable
 
   # DynamoDB Tables
 
