@@ -61,6 +61,30 @@ Resources:
             Method: ANY
     DependsOn: DepartmentsTable
 
+  OpenHousesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: openhouses/
+      Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref OpenHousesTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OpenHousesTable
+      Events:
+        Gateway:
+          Type: Api
+          Properties:
+            Path: /openhouses
+            Method: ANY
+        GatewayParam:
+          Type: Api
+          Properties:
+            Path: /openhouses/{uuid}
+            Method: ANY
+    DependsOn: OpenHousesTable
+
   # DynamoDB Tables
 
   BuildingsTable:
@@ -79,6 +103,18 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: OpenHouse-Departments
+      AttributeDefinitions:
+        - AttributeName: UUID
+          AttributeType: S # String
+      KeySchema:
+        - AttributeName: UUID
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  OpenHousesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: OpenHouse-OpenHouses
       AttributeDefinitions:
         - AttributeName: UUID
           AttributeType: S # String
