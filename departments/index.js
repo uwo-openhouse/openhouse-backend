@@ -44,9 +44,7 @@ exports.handler = async (event, context) => {
                 return deleteDepartment(event.pathParameters.uuid);
 
             default:
-                return {
-                    statusCode: status.METHOD_NOT_ALLOWED
-                };
+                return { statusCode: status.METHOD_NOT_ALLOWED };
         }
     } catch (err) {
         console.err(err);
@@ -72,10 +70,8 @@ async function getDepartments() {
 
 async function createDepartment(body) {
     try {
-        console.log(body);
         const { value: department, error } = departmentSchema.validate(body);
         if (error) {
-            console.error(error);
             return {
                 statusCode: status.BAD_REQUEST,
                 body: JSON.stringify({
