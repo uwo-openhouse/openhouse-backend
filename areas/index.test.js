@@ -1,9 +1,9 @@
-const departmentsFunc = require('./index.js');
+const areasFunc = require('./index.js');
 const status = require('http-status');
 
-describe('Departments Lambda', function () {
-    test('GET returns departments from database', async () => {
-        const result = await departmentsFunc.handler({
+describe('Areas Lambda', function () {
+    test('GET returns areas from database', async () => {
+        const result = await areasFunc.handler({
             httpMethod: 'GET'
         }, {});
 

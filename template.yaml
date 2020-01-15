@@ -37,29 +37,29 @@ Resources:
             Method: ANY
     DependsOn: BuildingsTable
 
-  DepartmentsFunction:
+  AreasFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: departments/
+      CodeUri: areas/
       Handler: index.handler
       Environment:
         Variables:
-          TABLE_NAME: !Ref DepartmentsTable
+          TABLE_NAME: !Ref AreasTable
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref DepartmentsTable
+            TableName: !Ref AreasTable
       Events:
         Gateway:
           Type: Api
           Properties:
-            Path: /departments
+            Path: /areas
             Method: ANY
         GatewayParam:
           Type: Api
           Properties:
-            Path: /departments/{uuid}
+            Path: /areas/{uuid}
             Method: ANY
-    DependsOn: DepartmentsTable
+    DependsOn: AreasTable
 
   OpenHousesFunction:
     Type: AWS::Serverless::Function
@@ -136,10 +136,10 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
-  DepartmentsTable:
+  AreasTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: OpenHouse-Departments
+      TableName: OpenHouse-Areas
       AttributeDefinitions:
         - AttributeName: UUID
           AttributeType: S # String

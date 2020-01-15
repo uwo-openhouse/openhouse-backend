@@ -1,5 +1,5 @@
 {
-  "name": "openhouse-backend-departments",
+  "name": "openhouse-backend-areas",
   "version": "1.0.0",
   "description": "Backend SAM template & infrastructure",
   "main": "index.js",

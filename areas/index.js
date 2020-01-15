@@ -7,7 +7,7 @@ aws.config.update({ region: 'us-east-2' });
 const ddb = new aws.DynamoDB.DocumentClient({ apiVersion: '2012-08-10' });
 const TABLE_NAME = process.env.TABLE_NAME;
 
-const departmentSchema = Joi.object({
+const areaSchema = Joi.object({
     name: Joi.string().required(),
     color: Joi.string().regex(new RegExp('^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'), { name: 'Hex Color Code' }).required()
 });
@@ -16,10 +16,10 @@ exports.handler = async (event, context) => {
     try {
         switch (event.httpMethod) {
             case 'GET':
-                return getDepartments();
+                return getAreas();
 
             case 'POST':
-                return createDepartment(JSON.parse(event.body));
+                return createArea(JSON.parse(event.body));
 
             case 'PUT':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
@@ -30,7 +30,7 @@ exports.handler = async (event, context) => {
                         })
                     }
                 }
-                return updateDepartment(event.pathParameters.uuid, JSON.parse(event.body));
+                return updateArea(event.pathParameters.uuid, JSON.parse(event.body));
 
             case 'DELETE':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
@@ -41,7 +41,7 @@ exports.handler = async (event, context) => {
                         })
                     }
                 }
-                return deleteDepartment(event.pathParameters.uuid);
+                return deleteArea(event.pathParameters.uuid);
 
             default:
                 return { statusCode: status.METHOD_NOT_ALLOWED };
@@ -52,14 +52,14 @@ exports.handler = async (event, context) => {
     }
 };
 
-async function getDepartments() {
+async function getAreas() {
     try {
         const data = await ddb.scan({ TableName: TABLE_NAME }).promise();
 
         return {
             statusCode: status.OK,
             body: JSON.stringify({
-                departments: data.Items
+                areas: data.Items
             })
         };
     } catch (err) {
@@ -68,9 +68,9 @@ async function getDepartments() {
     }
 }
 
-async function createDepartment(body) {
+async function createArea(body) {
     try {
-        const { value: department, error } = departmentSchema.validate(body);
+        const { value: area, error } = areaSchema.validate(body);
         if (error) {
             return {
                 statusCode: status.BAD_REQUEST,
@@ -84,7 +84,7 @@ async function createDepartment(body) {
             TableName: TABLE_NAME,
             Item: {
                 UUID: UUIDv4(),
-                ...department
+                ...area
             }
         }).promise();
 
@@ -95,7 +95,7 @@ async function createDepartment(body) {
     }
 }
 
-async function updateDepartment(uuid, body) {
+async function updateArea(uuid, body) {
     try {
         // Check to ensure uuid exists first
         const existingData = await ddb.get({
@@ -106,12 +106,12 @@ async function updateDepartment(uuid, body) {
             return {
                 statusCode: status.NOT_FOUND,
                 body: JSON.stringify({
-                    error: 'Department does not exist'
+                    error: 'Area does not exist'
                 })
             }
         }
 
-        const { value: department, error } = departmentSchema.validate(body);
+        const { value: area, error } = areaSchema.validate(body);
         if (error) {
             return {
                 statusCode: status.BAD_REQUEST,
@@ -126,7 +126,7 @@ async function updateDepartment(uuid, body) {
             TableName: TABLE_NAME,
             Item: {
                 UUID: uuid,
-                ...department
+                ...area
             }
         }).promise();
 
@@ -137,7 +137,7 @@ async function updateDepartment(uuid, body) {
     }
 }
 
-async function deleteDepartment(uuid) {
+async function deleteArea(uuid) {
     try {
         await ddb.delete({
             TableName: TABLE_NAME,
