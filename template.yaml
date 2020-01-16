@@ -172,7 +172,52 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
+  # Cognito resources for admin authorization & UI
+
+  AdminPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: OpenHouse-AdminPool
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+
+  AdminPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref AdminPool
+      ClientName: OpenHouse-AdminPoolClient
+      AllowedOAuthFlowsUserPoolClient: true
+      SupportedIdentityProviders:
+        - COGNITO
+      CallbackURLs:
+        - https://frontend-app-todo.com/ # TODO: Replace with Admin UI
+      LogoutURLs:
+        - https://frontend-app-todo.com/login # TODO: Replace with Admin UI
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthScopes:
+        - openid
+      GenerateSecret: false
+
+  AdminPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: uwo-openhouse
+      UserPoolId: !Ref AdminPool
+
 Outputs:
   ApiEndpoint:
     Description: "API Gateway endpoint URL for Prod stage"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  AdminUIDomain:
+    Description: "Admin UI Sign In Domain"
+    Value: !Sub
+      - "https://${Domain}.auth.${AWS::Region}.amazoncognito.com/"
+      - Domain: !Ref AdminPoolDomain
