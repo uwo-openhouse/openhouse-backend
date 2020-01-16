@@ -70,23 +70,39 @@ async function getOpenHouses() {
 
 async function createOpenHouse(body) {
     try {
-        const { value: openHouse, error } = openHouseSchema.validate(body);
-        if (error) {
-            return {
-                statusCode: status.BAD_REQUEST,
-                body: JSON.stringify({
-                    error: error.details.map((error) => error.message).join('; ')
-                })
+        const bodyOpenHouses = [];
+
+        if (Array.isArray(body)) {
+            bodyOpenHouses.push(...body);
+        } else {
+            bodyOpenHouses.push(body);
+        }
+
+        const validOpenHouses = [];
+        for (let i = 0; i < bodyOpenHouses.length; i++) {
+            const { value: openHouse, error } = openHouseSchema.validate(bodyOpenHouses[i]);
+
+            if (error) {
+                return {
+                    statusCode: status.BAD_REQUEST,
+                    body: JSON.stringify({
+                        error: error.details.map((error) => error.message).join('; ') + ` for open house with index ${i}`
+                    })
+                }
+            } else {
+                validOpenHouses.push(openHouse);
             }
         }
 
-        await ddb.put({
-            TableName: TABLE_NAME,
-            Item: {
-                UUID: UUIDv4(),
-                ...openHouse
-            }
-        }).promise();
+        for (const openHouse of validOpenHouses) {
+            await ddb.put({
+                TableName: TABLE_NAME,
+                Item: {
+                    UUID: UUIDv4(),
+                    ...openHouse
+                }
+            }).promise();
+        }
 
         return { statusCode: status.CREATED };
     } catch (err) {

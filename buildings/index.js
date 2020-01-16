@@ -71,23 +71,39 @@ async function getBuildings() {
 
 async function createBuilding(body) {
     try {
-        const { value: building, error } = buildingSchema.validate(body);
-        if (error) {
-            return {
-                statusCode: status.BAD_REQUEST,
-                body: JSON.stringify({
-                    error: error.details.map((error) => error.message).join('; ')
-                })
+        const bodyBuildings = [];
+
+        if (Array.isArray(body)) {
+            bodyBuildings.push(...body);
+        } else {
+            bodyBuildings.push(body);
+        }
+
+        const validBuildings = [];
+        for (let i = 0; i < bodyBuildings.length; i++) {
+            const { value: building, error } = buildingSchema.validate(bodyBuildings[i]);
+
+            if (error) {
+                return {
+                    statusCode: status.BAD_REQUEST,
+                    body: JSON.stringify({
+                        error: error.details.map((error) => error.message).join('; ') + ` for building with index ${i}`
+                    })
+                }
+            } else {
+                validBuildings.push(building);
             }
         }
 
-        await ddb.put({
-            TableName: TABLE_NAME,
-            Item: {
-                UUID: UUIDv4(),
-                ...building
-            }
-        }).promise();
+        for (const building of validBuildings) {
+            await ddb.put({
+                TableName: TABLE_NAME,
+                Item: {
+                    UUID: UUIDv4(),
+                    ...building
+                }
+            }).promise();
+        }
 
         return { statusCode: status.CREATED };
     } catch (err) {

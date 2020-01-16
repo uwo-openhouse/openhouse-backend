@@ -68,23 +68,39 @@ async function getAreas() {
 
 async function createArea(body) {
     try {
-        const { value: area, error } = areaSchema.validate(body);
-        if (error) {
-            return {
-                statusCode: status.BAD_REQUEST,
-                body: JSON.stringify({
-                    error: error.details.map((error) => error.message).join('; ')
-                })
+        const bodyAreas = [];
+
+        if (Array.isArray(body)) {
+            bodyAreas.push(...body);
+        } else {
+            bodyAreas.push(body);
+        }
+
+        const validAreas = [];
+        for (let i = 0; i < bodyAreas.length; i++) {
+            const { value: area, error } = areaSchema.validate(bodyAreas[i]);
+
+            if (error) {
+                return {
+                    statusCode: status.BAD_REQUEST,
+                    body: JSON.stringify({
+                        error: error.details.map((error) => error.message).join('; ') + ` for area with index ${i}`
+                    })
+                }
+            } else {
+                validAreas.push(area);
             }
         }
 
-        await ddb.put({
-            TableName: TABLE_NAME,
-            Item: {
-                UUID: UUIDv4(),
-                ...area
-            }
-        }).promise();
+        for (const area of validAreas) {
+            await ddb.put({
+                TableName: TABLE_NAME,
+                Item: {
+                    UUID: UUIDv4(),
+                    ...area
+                }
+            }).promise();
+        }
 
         return { statusCode: status.CREATED };
     } catch (err) {

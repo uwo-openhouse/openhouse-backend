@@ -81,33 +81,48 @@ async function getEvents() {
 
 async function createEvent(body) {
     try {
-        const { value: event, error } = eventSchema.validate(body);
-        if (error) {
-            return {
-                statusCode: status.BAD_REQUEST,
-                body: JSON.stringify({
-                    error: error.details.map((error) => error.message).join('; ')
-                })
-            }
+        const bodyEvents = [];
+
+        if (Array.isArray(body)) {
+            bodyEvents.push(...body);
+        } else {
+            bodyEvents.push(body);
         }
 
-        const verifyError = await verifyIDs(event.openHouse, event.area, event.building);
-        if (verifyError) {
-            return {
-                statusCode: status.BAD_REQUEST,
-                body: JSON.stringify({
-                    error: verifyError
-                })
+        const validEvents = [];
+        for (let i = 0; i < bodyEvents.length; i++) {
+            const { value: event, error } = eventSchema.validate(bodyEvents[i]);
+            if (error) {
+                return {
+                    statusCode: status.BAD_REQUEST,
+                    body: JSON.stringify({
+                        error: error.details.map((error) => error.message).join('; ') + ` for event with index ${i}`
+                    })
+                }
             }
+
+            const verifyError = await verifyIDs(event.openHouse, event.area, event.building);
+            if (verifyError) {
+                return {
+                    statusCode: status.BAD_REQUEST,
+                    body: JSON.stringify({
+                        error: verifyError + ` for event with index ${i}`
+                    })
+                }
+            }
+
+            validEvents.push(event);
         }
 
-        await ddb.put({
-            TableName: EVENTS_TABLE,
-            Item: {
-                UUID: UUIDv4(),
-                ...event
-            }
-        }).promise();
+        for (const event of validEvents) {
+            await ddb.put({
+                TableName: EVENTS_TABLE,
+                Item: {
+                    UUID: UUIDv4(),
+                    ...event
+                }
+            }).promise();
+        }
 
         return { statusCode: status.CREATED };
     } catch (err) {
