@@ -58,9 +58,7 @@ async function getAreas() {
 
         return {
             statusCode: status.OK,
-            body: JSON.stringify({
-                areas: data.Items
-            })
+            body: JSON.stringify(data.Items)
         };
     } catch (err) {
         console.error(err);

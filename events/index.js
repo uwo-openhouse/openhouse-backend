@@ -71,9 +71,7 @@ async function getEvents() {
         // TODO: Only return events that belong to a visible=true open house when admin is not authenticated
         return {
             statusCode: status.OK,
-            body: JSON.stringify({
-                events: data.Items
-            })
+            body: JSON.stringify(data.Items)
         };
     } catch (err) {
         console.error(err);

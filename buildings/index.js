@@ -61,9 +61,7 @@ async function getBuildings() {
 
         return {
             statusCode: status.OK,
-            body: JSON.stringify({
-                buildings: data.Items
-            })
+            body: JSON.stringify(data.Items)
         };
     } catch (err) {
         console.error(err);

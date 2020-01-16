@@ -60,9 +60,7 @@ async function getOpenHouses() {
 
         return {
             statusCode: status.OK,
-            body: JSON.stringify({
-                openHouses: data.Items
-            })
+            body: JSON.stringify(data.Items)
         };
     } catch (err) {
         console.error(err);
