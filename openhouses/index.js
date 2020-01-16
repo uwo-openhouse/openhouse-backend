@@ -7,22 +7,21 @@ aws.config.update({ region: 'us-east-2' });
 const ddb = new aws.DynamoDB.DocumentClient({ apiVersion: '2012-08-10' });
 const TABLE_NAME = process.env.TABLE_NAME;
 
-const buildingSchema = Joi.object({
+const openHouseSchema = Joi.object({
     name: Joi.string().required(),
-    position: Joi.object({
-        lat: Joi.number().greater(-90).less(90).required(),
-        lng: Joi.number().greater(-180).less(180).required()
-    }).required()
+    date: Joi.number().integer().positive().required(),
+    info: Joi.string().required(),
+    visible: Joi.boolean().required()
 });
 
 exports.handler = async (event, context) => {
     try {
         switch (event.httpMethod) {
             case 'GET':
-                return getBuildings();
+                return getOpenHouses();
 
             case 'POST':
-                return createBuilding(JSON.parse(event.body));
+                return createOpenHouse(JSON.parse(event.body));
 
             case 'PUT':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
@@ -33,7 +32,7 @@ exports.handler = async (event, context) => {
                         })
                     }
                 }
-                return updateBuilding(event.pathParameters.uuid, JSON.parse(event.body));
+                return updateOpenHouse(event.pathParameters.uuid, JSON.parse(event.body));
 
             case 'DELETE':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
@@ -44,7 +43,7 @@ exports.handler = async (event, context) => {
                         })
                     }
                 }
-                return deleteBuilding(event.pathParameters.uuid);
+                return deleteOpenHouse(event.pathParameters.uuid);
 
             default:
                 return { statusCode: status.METHOD_NOT_ALLOWED };
@@ -55,7 +54,7 @@ exports.handler = async (event, context) => {
     }
 };
 
-async function getBuildings() {
+async function getOpenHouses() {
     try {
         const data = await ddb.scan({ TableName: TABLE_NAME }).promise();
 
@@ -69,38 +68,38 @@ async function getBuildings() {
     }
 }
 
-async function createBuilding(body) {
+async function createOpenHouse(body) {
     try {
-        const bodyBuildings = [];
+        const bodyOpenHouses = [];
 
         if (Array.isArray(body)) {
-            bodyBuildings.push(...body);
+            bodyOpenHouses.push(...body);
         } else {
-            bodyBuildings.push(body);
+            bodyOpenHouses.push(body);
         }
 
-        const validBuildings = [];
-        for (let i = 0; i < bodyBuildings.length; i++) {
-            const { value: building, error } = buildingSchema.validate(bodyBuildings[i]);
+        const validOpenHouses = [];
+        for (let i = 0; i < bodyOpenHouses.length; i++) {
+            const { value: openHouse, error } = openHouseSchema.validate(bodyOpenHouses[i]);
 
             if (error) {
                 return {
                     statusCode: status.BAD_REQUEST,
                     body: JSON.stringify({
-                        error: error.details.map((error) => error.message).join('; ') + ` for building with index ${i}`
+                        error: error.details.map((error) => error.message).join('; ') + ` for open house with index ${i}`
                     })
                 }
             } else {
-                validBuildings.push(building);
+                validOpenHouses.push(openHouse);
             }
         }
 
-        for (const building of validBuildings) {
+        for (const openHouse of validOpenHouses) {
             await ddb.put({
                 TableName: TABLE_NAME,
                 Item: {
                     uuid: UUIDv4(),
-                    ...building
+                    ...openHouse
                 }
             }).promise();
         }
@@ -112,7 +111,7 @@ async function createBuilding(body) {
     }
 }
 
-async function updateBuilding(uuid, body) {
+async function updateOpenHouse(uuid, body) {
     try {
         // Check to ensure uuid exists first
         const existingData = await ddb.get({
@@ -123,12 +122,12 @@ async function updateBuilding(uuid, body) {
             return {
                 statusCode: status.NOT_FOUND,
                 body: JSON.stringify({
-                    error: 'Building does not exist'
+                    error: 'Open House does not exist'
                 })
             }
         }
 
-        const { value: building, error } = buildingSchema.validate(body);
+        const { value: openHouse, error } = openHouseSchema.validate(body);
         if (error) {
             return {
                 statusCode: status.BAD_REQUEST,
@@ -143,7 +142,7 @@ async function updateBuilding(uuid, body) {
             TableName: TABLE_NAME,
             Item: {
                 uuid,
-                ...building
+                ...openHouse
             }
         }).promise();
 
@@ -154,7 +153,7 @@ async function updateBuilding(uuid, body) {
     }
 }
 
-async function deleteBuilding(uuid) {
+async function deleteOpenHouse(uuid) {
     try {
         await ddb.delete({
             TableName: TABLE_NAME,

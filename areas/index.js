@@ -7,22 +7,19 @@ aws.config.update({ region: 'us-east-2' });
 const ddb = new aws.DynamoDB.DocumentClient({ apiVersion: '2012-08-10' });
 const TABLE_NAME = process.env.TABLE_NAME;
 
-const buildingSchema = Joi.object({
+const areaSchema = Joi.object({
     name: Joi.string().required(),
-    position: Joi.object({
-        lat: Joi.number().greater(-90).less(90).required(),
-        lng: Joi.number().greater(-180).less(180).required()
-    }).required()
+    color: Joi.string().regex(new RegExp('^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'), { name: 'Hex Color Code' }).required()
 });
 
 exports.handler = async (event, context) => {
     try {
         switch (event.httpMethod) {
             case 'GET':
-                return getBuildings();
+                return getAreas();
 
             case 'POST':
-                return createBuilding(JSON.parse(event.body));
+                return createArea(JSON.parse(event.body));
 
             case 'PUT':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
@@ -33,7 +30,7 @@ exports.handler = async (event, context) => {
                         })
                     }
                 }
-                return updateBuilding(event.pathParameters.uuid, JSON.parse(event.body));
+                return updateArea(event.pathParameters.uuid, JSON.parse(event.body));
 
             case 'DELETE':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
@@ -44,7 +41,7 @@ exports.handler = async (event, context) => {
                         })
                     }
                 }
-                return deleteBuilding(event.pathParameters.uuid);
+                return deleteArea(event.pathParameters.uuid);
 
             default:
                 return { statusCode: status.METHOD_NOT_ALLOWED };
@@ -55,7 +52,7 @@ exports.handler = async (event, context) => {
     }
 };
 
-async function getBuildings() {
+async function getAreas() {
     try {
         const data = await ddb.scan({ TableName: TABLE_NAME }).promise();
 
@@ -69,38 +66,38 @@ async function getBuildings() {
     }
 }
 
-async function createBuilding(body) {
+async function createArea(body) {
     try {
-        const bodyBuildings = [];
+        const bodyAreas = [];
 
         if (Array.isArray(body)) {
-            bodyBuildings.push(...body);
+            bodyAreas.push(...body);
         } else {
-            bodyBuildings.push(body);
+            bodyAreas.push(body);
         }
 
-        const validBuildings = [];
-        for (let i = 0; i < bodyBuildings.length; i++) {
-            const { value: building, error } = buildingSchema.validate(bodyBuildings[i]);
+        const validAreas = [];
+        for (let i = 0; i < bodyAreas.length; i++) {
+            const { value: area, error } = areaSchema.validate(bodyAreas[i]);
 
             if (error) {
                 return {
                     statusCode: status.BAD_REQUEST,
                     body: JSON.stringify({
-                        error: error.details.map((error) => error.message).join('; ') + ` for building with index ${i}`
+                        error: error.details.map((error) => error.message).join('; ') + ` for area with index ${i}`
                     })
                 }
             } else {
-                validBuildings.push(building);
+                validAreas.push(area);
             }
         }
 
-        for (const building of validBuildings) {
+        for (const area of validAreas) {
             await ddb.put({
                 TableName: TABLE_NAME,
                 Item: {
                     uuid: UUIDv4(),
-                    ...building
+                    ...area
                 }
             }).promise();
         }
@@ -112,7 +109,7 @@ async function createBuilding(body) {
     }
 }
 
-async function updateBuilding(uuid, body) {
+async function updateArea(uuid, body) {
     try {
         // Check to ensure uuid exists first
         const existingData = await ddb.get({
@@ -123,12 +120,12 @@ async function updateBuilding(uuid, body) {
             return {
                 statusCode: status.NOT_FOUND,
                 body: JSON.stringify({
-                    error: 'Building does not exist'
+                    error: 'Area does not exist'
                 })
             }
         }
 
-        const { value: building, error } = buildingSchema.validate(body);
+        const { value: area, error } = areaSchema.validate(body);
         if (error) {
             return {
                 statusCode: status.BAD_REQUEST,
@@ -143,7 +140,7 @@ async function updateBuilding(uuid, body) {
             TableName: TABLE_NAME,
             Item: {
                 uuid,
-                ...building
+                ...area
             }
         }).promise();
 
@@ -154,7 +151,7 @@ async function updateBuilding(uuid, body) {
     }
 }
 
-async function deleteBuilding(uuid) {
+async function deleteArea(uuid) {
     try {
         await ddb.delete({
             TableName: TABLE_NAME,

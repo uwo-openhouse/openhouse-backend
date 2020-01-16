@@ -12,50 +12,163 @@ Globals:
 
 Resources:
   # Lambda Functions & API Events
+
   BuildingsFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: buildings/
       Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref BuildingsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BuildingsTable
       Events:
         Gateway:
           Type: Api
           Properties:
             Path: /buildings
             Method: ANY
-  DepartmentsFunction:
+        GatewayParam:
+          Type: Api
+          Properties:
+            Path: /buildings/{uuid}
+            Method: ANY
+    DependsOn: BuildingsTable
+
+  AreasFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: departments/
+      CodeUri: areas/
       Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref AreasTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AreasTable
       Events:
         Gateway:
           Type: Api
           Properties:
-            Path: /departments
+            Path: /areas
             Method: ANY
+        GatewayParam:
+          Type: Api
+          Properties:
+            Path: /areas/{uuid}
+            Method: ANY
+    DependsOn: AreasTable
+
+  OpenHousesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: openhouses/
+      Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref OpenHousesTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OpenHousesTable
+      Events:
+        Gateway:
+          Type: Api
+          Properties:
+            Path: /openhouses
+            Method: ANY
+        GatewayParam:
+          Type: Api
+          Properties:
+            Path: /openhouses/{uuid}
+            Method: ANY
+    DependsOn: OpenHousesTable
+
+  EventsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: events/
+      Handler: index.handler
+      Environment:
+        Variables:
+          EVENTS_TABLE: !Ref EventsTable
+          OPEN_HOUSES_TABLE: !Ref OpenHousesTable
+          AREAS_TABLE: !Ref AreasTable
+          BUILDINGS_TABLE: !Ref BuildingsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref OpenHousesTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref AreasTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref BuildingsTable
+      Events:
+        Gateway:
+          Type: Api
+          Properties:
+            Path: /events
+            Method: ANY
+        GatewayParam:
+          Type: Api
+          Properties:
+            Path: /events/{uuid}
+            Method: ANY
+    DependsOn:
+      - EventsTable
+      - OpenHousesTable
+      - AreasTable
+      - BuildingsTable
 
   # DynamoDB Tables
+
   BuildingsTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: OpenHouse-Buildings
       AttributeDefinitions:
-        - AttributeName: UUID
+        - AttributeName: uuid
           AttributeType: S # String
       KeySchema:
-        - AttributeName: UUID
+        - AttributeName: uuid
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
-  DepartmentsTable:
+
+  AreasTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: OpenHouse-Departments
+      TableName: OpenHouse-Areas
       AttributeDefinitions:
-        - AttributeName: UUID
+        - AttributeName: uuid
           AttributeType: S # String
       KeySchema:
-        - AttributeName: UUID
+        - AttributeName: uuid
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  OpenHousesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: OpenHouse-OpenHouses
+      AttributeDefinitions:
+        - AttributeName: uuid
+          AttributeType: S # String
+      KeySchema:
+        - AttributeName: uuid
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  EventsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: OpenHouse-Events
+      AttributeDefinitions:
+        - AttributeName: uuid
+          AttributeType: S # String
+      KeySchema:
+        - AttributeName: uuid
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
