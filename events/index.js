@@ -101,7 +101,7 @@ async function createEvent(body) {
                 }
             }
 
-            const verifyError = await verifyIDs(event.openHouse, event.area, event.building);
+            const verifyError = await verifyUUIDs(event.openHouse, event.area, event.building);
             if (verifyError) {
                 return {
                     statusCode: status.BAD_REQUEST,
@@ -118,7 +118,7 @@ async function createEvent(body) {
             await ddb.put({
                 TableName: EVENTS_TABLE,
                 Item: {
-                    UUID: UUIDv4(),
+                    uuid: UUIDv4(),
                     ...event
                 }
             }).promise();
@@ -136,7 +136,7 @@ async function updateEvent(uuid, body) {
         // Check to ensure uuid exists first
         const existingData = await ddb.get({
             TableName: EVENTS_TABLE,
-            Key: { UUID: uuid }
+            Key: { uuid }
         }).promise();
         if (!existingData.Item) {
             return {
@@ -157,7 +157,7 @@ async function updateEvent(uuid, body) {
             }
         }
 
-        const verifyError = await verifyIDs(event.openHouse, event.area, event.building);
+        const verifyError = await verifyUUIDs(event.openHouse, event.area, event.building);
         if (verifyError) {
             return {
                 statusCode: status.BAD_REQUEST,
@@ -171,7 +171,7 @@ async function updateEvent(uuid, body) {
         await ddb.put({
             TableName: EVENTS_TABLE,
             Item: {
-                UUID: uuid,
+                uuid,
                 ...event
             }
         }).promise();
@@ -187,7 +187,7 @@ async function deleteEvent(uuid) {
     try {
         await ddb.delete({
             TableName: EVENTS_TABLE,
-            Key: { UUID: uuid }
+            Key: { uuid }
         }).promise();
 
         return { statusCode: status.OK };
@@ -197,10 +197,10 @@ async function deleteEvent(uuid) {
     }
 }
 
-async function verifyIDs(openHouseId, areasId, buildingId) {
+async function verifyUUIDs(openHouseUUID, areasUUID, buildingUUID) {
     const openHouseData = await ddb.get({
         TableName: OPEN_HOUSES_TABLE,
-        Key: { UUID: openHouseId }
+        Key: { uuid: openHouseUUID }
     }).promise();
     if (!openHouseData.Item) {
         return 'Specified open house does not exist';
@@ -208,7 +208,7 @@ async function verifyIDs(openHouseId, areasId, buildingId) {
 
     const areaData = await ddb.get({
         TableName: AREAS_TABLE,
-        Key: { UUID: areasId }
+        Key: { uuid: areasUUID }
     }).promise();
     if (!areaData.Item) {
         return 'Specified area does not exist';
@@ -216,7 +216,7 @@ async function verifyIDs(openHouseId, areasId, buildingId) {
 
     const buildingData = await ddb.get({
         TableName: BUILDINGS_TABLE,
-        Key: { UUID: buildingId }
+        Key: { uuid: buildingUUID }
     }).promise();
     if (!buildingData.Item) {
         return 'Specified building does not exist';

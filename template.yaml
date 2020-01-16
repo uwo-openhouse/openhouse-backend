@@ -129,10 +129,10 @@ Resources:
     Properties:
       TableName: OpenHouse-Buildings
       AttributeDefinitions:
-        - AttributeName: UUID
+        - AttributeName: uuid
           AttributeType: S # String
       KeySchema:
-        - AttributeName: UUID
+        - AttributeName: uuid
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
@@ -141,10 +141,10 @@ Resources:
     Properties:
       TableName: OpenHouse-Areas
       AttributeDefinitions:
-        - AttributeName: UUID
+        - AttributeName: uuid
           AttributeType: S # String
       KeySchema:
-        - AttributeName: UUID
+        - AttributeName: uuid
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
@@ -153,10 +153,10 @@ Resources:
     Properties:
       TableName: OpenHouse-OpenHouses
       AttributeDefinitions:
-        - AttributeName: UUID
+        - AttributeName: uuid
           AttributeType: S # String
       KeySchema:
-        - AttributeName: UUID
+        - AttributeName: uuid
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
@@ -165,10 +165,10 @@ Resources:
     Properties:
       TableName: OpenHouse-Events
       AttributeDefinitions:
-        - AttributeName: UUID
+        - AttributeName: uuid
           AttributeType: S # String
       KeySchema:
-        - AttributeName: UUID
+        - AttributeName: uuid
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 

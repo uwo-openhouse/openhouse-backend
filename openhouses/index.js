@@ -98,7 +98,7 @@ async function createOpenHouse(body) {
             await ddb.put({
                 TableName: TABLE_NAME,
                 Item: {
-                    UUID: UUIDv4(),
+                    uuid: UUIDv4(),
                     ...openHouse
                 }
             }).promise();
@@ -116,7 +116,7 @@ async function updateOpenHouse(uuid, body) {
         // Check to ensure uuid exists first
         const existingData = await ddb.get({
             TableName: TABLE_NAME,
-            Key: { UUID: uuid }
+            Key: { uuid }
         }).promise();
         if (!existingData.Item) {
             return {
@@ -141,7 +141,7 @@ async function updateOpenHouse(uuid, body) {
         await ddb.put({
             TableName: TABLE_NAME,
             Item: {
-                UUID: uuid,
+                uuid,
                 ...openHouse
             }
         }).promise();
@@ -157,7 +157,7 @@ async function deleteOpenHouse(uuid) {
     try {
         await ddb.delete({
             TableName: TABLE_NAME,
-            Key: { UUID: uuid }
+            Key: { uuid }
         }).promise();
 
         return { statusCode: status.OK };
