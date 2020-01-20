@@ -102,18 +102,24 @@ async function createArea(body) {
             }
         }
 
+        const newAreas = [];
         for (const area of validAreas) {
+            const newArea = {
+                uuid: UUIDv4(),
+                ...area
+            };
+
             await ddb.put({
                 TableName: TABLE_NAME,
-                Item: {
-                    uuid: UUIDv4(),
-                    ...area
-                }
+                Item: newArea
             }).promise();
+
+            newAreas.push(newArea);
         }
 
         return {
             statusCode: status.CREATED,
+            body: JSON.stringify(newAreas.length > 1 ? newAreas : newAreas[0]),
             headers
         };
     } catch (err) {
