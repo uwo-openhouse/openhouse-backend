@@ -11,8 +11,9 @@ const {
     AREAS_TABLE,
     OPEN_HOUSES_TABLE
 } = process.env;
-
-console.log(EVENTS_TABLE, BUILDINGS_TABLE, AREAS_TABLE, OPEN_HOUSES_TABLE);
+const headers = {
+    'Access-Control-Allow-Origin': '*'
+};
 
 const eventSchema = Joi.object({
     name: Joi.string().required(),
@@ -39,7 +40,8 @@ exports.handler = async (event, context) => {
                         statusCode: status.BAD_REQUEST,
                         body: JSON.stringify({
                             error: 'Missing UUID in URL path'
-                        })
+                        }),
+                        headers
                     }
                 }
                 return updateEvent(event.pathParameters.uuid, JSON.parse(event.body));
@@ -50,13 +52,17 @@ exports.handler = async (event, context) => {
                         statusCode: status.BAD_REQUEST,
                         body: JSON.stringify({
                             error: 'Missing UUID in URL path'
-                        })
+                        }),
+                        headers
                     }
                 }
                 return deleteEvent(event.pathParameters.uuid);
 
             default:
-                return { statusCode: status.METHOD_NOT_ALLOWED };
+                return {
+                    statusCode: status.METHOD_NOT_ALLOWED,
+                    headers
+                };
         }
     } catch (err) {
         console.err(err);
@@ -71,7 +77,8 @@ async function getEvents() {
         // TODO: Only return events that belong to a visible=true open house when admin is not authenticated
         return {
             statusCode: status.OK,
-            body: JSON.stringify(data.Items)
+            body: JSON.stringify(data.Items),
+            headers
         };
     } catch (err) {
         console.error(err);
@@ -97,7 +104,8 @@ async function createEvent(body) {
                     statusCode: status.BAD_REQUEST,
                     body: JSON.stringify({
                         error: error.details.map((error) => error.message).join('; ') + ` for event with index ${i}`
-                    })
+                    }),
+                    headers
                 }
             }
 
@@ -107,7 +115,8 @@ async function createEvent(body) {
                     statusCode: status.BAD_REQUEST,
                     body: JSON.stringify({
                         error: verifyError + ` for event with index ${i}`
-                    })
+                    }),
+                    headers
                 }
             }
 
@@ -124,7 +133,10 @@ async function createEvent(body) {
             }).promise();
         }
 
-        return { statusCode: status.CREATED };
+        return {
+            statusCode: status.CREATED,
+            headers
+        };
     } catch (err) {
         console.error(err);
         return err;
@@ -143,7 +155,8 @@ async function updateEvent(uuid, body) {
                 statusCode: status.NOT_FOUND,
                 body: JSON.stringify({
                     error: 'Event does not exist'
-                })
+                }),
+                headers
             }
         }
 
@@ -153,7 +166,8 @@ async function updateEvent(uuid, body) {
                 statusCode: status.BAD_REQUEST,
                 body: JSON.stringify({
                     error: error.details.map((detail) => detail.message).join('; ')
-                })
+                }),
+                headers
             }
         }
 
@@ -163,7 +177,8 @@ async function updateEvent(uuid, body) {
                 statusCode: status.BAD_REQUEST,
                 body: JSON.stringify({
                     error: verifyError
-                })
+                }),
+                headers
             }
         }
 
@@ -176,7 +191,10 @@ async function updateEvent(uuid, body) {
             }
         }).promise();
 
-        return { statusCode: status.OK };
+        return {
+            statusCode: status.OK,
+            headers
+        };
     } catch (err) {
         console.error(err);
         return err;
@@ -190,7 +208,10 @@ async function deleteEvent(uuid) {
             Key: { uuid }
         }).promise();
 
-        return { statusCode: status.OK };
+        return {
+            statusCode: status.OK,
+            headers
+        };
     } catch (err) {
         console.error(err);
         return err;

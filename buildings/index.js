@@ -6,6 +6,9 @@ const Joi = require('@hapi/joi');
 aws.config.update({ region: 'us-east-2' });
 const ddb = new aws.DynamoDB.DocumentClient({ apiVersion: '2012-08-10' });
 const TABLE_NAME = process.env.TABLE_NAME;
+const headers = {
+    'Access-Control-Allow-Origin': '*'
+};
 
 const buildingSchema = Joi.object({
     name: Joi.string().required(),
@@ -30,7 +33,8 @@ exports.handler = async (event, context) => {
                         statusCode: status.BAD_REQUEST,
                         body: JSON.stringify({
                             error: 'Missing UUID in URL path'
-                        })
+                        }),
+                        headers
                     }
                 }
                 return updateBuilding(event.pathParameters.uuid, JSON.parse(event.body));
@@ -41,13 +45,17 @@ exports.handler = async (event, context) => {
                         statusCode: status.BAD_REQUEST,
                         body: JSON.stringify({
                             error: 'Missing UUID in URL path'
-                        })
+                        }),
+                        headers
                     }
                 }
                 return deleteBuilding(event.pathParameters.uuid);
 
             default:
-                return { statusCode: status.METHOD_NOT_ALLOWED };
+                return {
+                    statusCode: status.METHOD_NOT_ALLOWED,
+                    headers
+                };
         }
     } catch (err) {
         console.err(err);
@@ -61,7 +69,8 @@ async function getBuildings() {
 
         return {
             statusCode: status.OK,
-            body: JSON.stringify(data.Items)
+            body: JSON.stringify(data.Items),
+            headers
         };
     } catch (err) {
         console.error(err);
@@ -88,7 +97,8 @@ async function createBuilding(body) {
                     statusCode: status.BAD_REQUEST,
                     body: JSON.stringify({
                         error: error.details.map((error) => error.message).join('; ') + ` for building with index ${i}`
-                    })
+                    }),
+                    headers
                 }
             } else {
                 validBuildings.push(building);
@@ -105,7 +115,10 @@ async function createBuilding(body) {
             }).promise();
         }
 
-        return { statusCode: status.CREATED };
+        return {
+            statusCode: status.CREATED,
+            headers
+        };
     } catch (err) {
         console.error(err);
         return err;
@@ -124,7 +137,8 @@ async function updateBuilding(uuid, body) {
                 statusCode: status.NOT_FOUND,
                 body: JSON.stringify({
                     error: 'Building does not exist'
-                })
+                }),
+                headers
             }
         }
 
@@ -134,7 +148,8 @@ async function updateBuilding(uuid, body) {
                 statusCode: status.BAD_REQUEST,
                 body: JSON.stringify({
                     error: error.details.map((detail) => detail.message).join('; ')
-                })
+                }),
+                headers
             }
         }
 
@@ -147,7 +162,10 @@ async function updateBuilding(uuid, body) {
             }
         }).promise();
 
-        return { statusCode: status.OK };
+        return {
+            statusCode: status.OK,
+            headers
+        };
     } catch (err) {
         console.error(err);
         return err;
@@ -161,7 +179,10 @@ async function deleteBuilding(uuid) {
             Key: { uuid }
         }).promise();
 
-        return { statusCode: status.OK };
+        return {
+            statusCode: status.OK,
+            headers
+        };
     } catch (err) {
         console.error(err);
         return err;
