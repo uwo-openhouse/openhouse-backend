@@ -123,18 +123,24 @@ async function createEvent(body) {
             validEvents.push(event);
         }
 
+        const newEvents = [];
         for (const event of validEvents) {
+            const newEvent = {
+                uuid: UUIDv4(),
+                ...event
+            };
+
             await ddb.put({
                 TableName: EVENTS_TABLE,
-                Item: {
-                    uuid: UUIDv4(),
-                    ...event
-                }
+                Item: newEvent
             }).promise();
+
+            newEvents.push(newEvent);
         }
 
         return {
             statusCode: status.CREATED,
+            body: JSON.stringify(newEvents.length > 1 ? newEvents : newEvents[0]),
             headers
         };
     } catch (err) {

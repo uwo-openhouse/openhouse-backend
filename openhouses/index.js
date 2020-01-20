@@ -104,18 +104,24 @@ async function createOpenHouse(body) {
             }
         }
 
+        const newOpenHouses = [];
         for (const openHouse of validOpenHouses) {
+            const newOpenHouse = {
+                uuid: UUIDv4(),
+                ...openHouse
+            };
+
             await ddb.put({
                 TableName: TABLE_NAME,
-                Item: {
-                    uuid: UUIDv4(),
-                    ...openHouse
-                }
+                Item: newOpenHouse
             }).promise();
+
+            newOpenHouses.push(newOpenHouse);
         }
 
         return {
             statusCode: status.CREATED,
+            body: JSON.stringify(newOpenHouses.length > 1 ? newOpenHouses : newOpenHouses[0]),
             headers
         };
     } catch (err) {

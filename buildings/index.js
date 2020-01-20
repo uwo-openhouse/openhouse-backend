@@ -105,18 +105,24 @@ async function createBuilding(body) {
             }
         }
 
+        const newBuildings = [];
         for (const building of validBuildings) {
+            const newBuilding = {
+                uuid: UUIDv4(),
+                ...building
+            };
+
             await ddb.put({
                 TableName: TABLE_NAME,
-                Item: {
-                    uuid: UUIDv4(),
-                    ...building
-                }
+                Item: newBuilding
             }).promise();
+
+            newBuildings.push(newBuilding);
         }
 
         return {
             statusCode: status.CREATED,
+            body: JSON.stringify(newBuildings.length > 1 ? newBuildings : newBuildings[0]),
             headers
         };
     } catch (err) {
