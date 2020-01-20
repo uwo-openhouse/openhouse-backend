@@ -121,7 +121,7 @@ async function createOpenHouse(body) {
 
         return {
             statusCode: status.CREATED,
-            body: JSON.stringify(newOpenHouses.length > 1 ? newOpenHouses : newOpenHouses[0]),
+            body: JSON.stringify(Array.isArray(body) ? newOpenHouses : newOpenHouses[0]),
             headers
         };
     } catch (err) {
