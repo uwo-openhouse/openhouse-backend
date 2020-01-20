@@ -119,7 +119,7 @@ async function createArea(body) {
 
         return {
             statusCode: status.CREATED,
-            body: JSON.stringify(newAreas.length > 1 ? newAreas : newAreas[0]),
+            body: JSON.stringify(Array.isArray(body) ? newAreas : newAreas[0]),
             headers
         };
     } catch (err) {

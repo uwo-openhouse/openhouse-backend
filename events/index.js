@@ -140,7 +140,7 @@ async function createEvent(body) {
 
         return {
             statusCode: status.CREATED,
-            body: JSON.stringify(newEvents.length > 1 ? newEvents : newEvents[0]),
+            body: JSON.stringify(Array.isArray(body) ? newEvents : newEvents[0]),
             headers
         };
     } catch (err) {

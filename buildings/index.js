@@ -122,7 +122,7 @@ async function createBuilding(body) {
 
         return {
             statusCode: status.CREATED,
-            body: JSON.stringify(newBuildings.length > 1 ? newBuildings : newBuildings[0]),
+            body: JSON.stringify(Array.isArray(body) ? newBuildings : newBuildings[0]),
             headers
         };
     } catch (err) {
