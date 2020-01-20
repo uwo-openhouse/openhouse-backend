@@ -6,6 +6,11 @@ Description: >
   Backend SAM & Infrastructure
 
 Globals:
+  Api:
+    Cors:
+      AllowMethods: "'OPTIONS,GET,POST,PUT,DELETE'"
+      AllowHeaders: "'Content-Type'"
+      AllowOrigin: "'*'"
   Function:
     Timeout: 3
     Runtime: nodejs12.x
