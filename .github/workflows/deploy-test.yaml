@@ -24,7 +24,9 @@ jobs:
           aws-region: $REGION
       - name: Install Homebrew & SAM CLI
         run: |
+          sudo apt-get install build-essential curl file git
           sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
+          export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
           brew --version
           brew tap aws/tap
           brew install aws-sam-cli
