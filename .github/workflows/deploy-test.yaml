@@ -6,7 +6,6 @@ on:
       - develop
 
 env:
-  REGION: us-east-2
   STACK_NAME: openhouse-backend
   BUILD_BUCKET: uwo-openhouse-backend-builds-test
 
@@ -26,7 +25,7 @@ jobs:
         run: |
           sudo apt-get install build-essential curl file git
           sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
-          export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+          echo "::add-path::/home/linuxbrew/.linuxbrew/bin"
           brew --version
           brew tap aws/tap
           brew install aws-sam-cli
@@ -34,4 +33,4 @@ jobs:
       - name: Build
         run: sam build
       - name: Deploy
-        run: sam deploy --stack-name $STACK_NAME --capabilities CAPABILITY_IAM --s3-bucket $BUILD_BUCKET --region $REGION
+        run: sam deploy --stack-name $STACK_NAME --capabilities CAPABILITY_IAM --s3-bucket $BUILD_BUCKET
