@@ -6,9 +6,14 @@ const Joi = require('@hapi/joi');
 aws.config.update({ region: 'us-east-2' });
 const ddb = new aws.DynamoDB.DocumentClient({ apiVersion: '2012-08-10' });
 const TABLE_NAME = process.env.TABLE_NAME;
-const headers = {
-    'Access-Control-Allow-Origin': '*'
-};
+
+const response = (statusCode, body) => ({
+    statusCode,
+    body: JSON.stringify(body),
+    headers: {
+        'Access-Control-Allow-Origin': '*'
+    }
+});
 
 const openHouseSchema = Joi.object({
     name: Joi.string().required(),
@@ -28,33 +33,18 @@ exports.handler = async (event, context) => {
 
             case 'PUT':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
-                    return {
-                        statusCode: status.BAD_REQUEST,
-                        body: JSON.stringify({
-                            error: 'Missing UUID in URL path'
-                        }),
-                        headers
-                    }
+                    return response(status.BAD_REQUEST, { error: 'Missing UUID in URL path' });
                 }
                 return updateOpenHouse(event.pathParameters.uuid, JSON.parse(event.body));
 
             case 'DELETE':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
-                    return {
-                        statusCode: status.BAD_REQUEST,
-                        body: JSON.stringify({
-                            error: 'Missing UUID in URL path'
-                        }),
-                        headers
-                    }
+                    return response(status.BAD_REQUEST, { error: 'Missing UUID in URL path' })
                 }
                 return deleteOpenHouse(event.pathParameters.uuid);
 
             default:
-                return {
-                    statusCode: status.METHOD_NOT_ALLOWED,
-                    headers
-                };
+                return response(status.METHOD_NOT_ALLOWED);
         }
     } catch (err) {
         console.err(err);
@@ -66,11 +56,7 @@ async function getOpenHouses() {
     try {
         const data = await ddb.scan({ TableName: TABLE_NAME }).promise();
 
-        return {
-            statusCode: status.OK,
-            body: JSON.stringify(data.Items),
-            headers
-        };
+        return response(status.OK, data.Items);
     } catch (err) {
         console.error(err);
         return err;
@@ -92,13 +78,9 @@ async function createOpenHouse(body) {
             const { value: openHouse, error } = openHouseSchema.validate(bodyOpenHouses[i]);
 
             if (error) {
-                return {
-                    statusCode: status.BAD_REQUEST,
-                    body: JSON.stringify({
-                        error: error.details.map((error) => error.message).join('; ') + ` for open house with index ${i}`
-                    }),
-                    headers
-                }
+                return response(status.BAD_REQUEST, {
+                    error: error.details.map((error) => error.message).join('; ') + ` for open house with index ${i}`
+                });
             } else {
                 validOpenHouses.push(openHouse);
             }
@@ -119,11 +101,7 @@ async function createOpenHouse(body) {
             newOpenHouses.push(newOpenHouse);
         }
 
-        return {
-            statusCode: status.CREATED,
-            body: JSON.stringify(Array.isArray(body) ? newOpenHouses : newOpenHouses[0]),
-            headers
-        };
+        return response(status.CREATED, Array.isArray(body) ? newOpenHouses : newOpenHouses[0]);
     } catch (err) {
         console.error(err);
         return err;
@@ -138,24 +116,14 @@ async function updateOpenHouse(uuid, body) {
             Key: { uuid }
         }).promise();
         if (!existingData.Item) {
-            return {
-                statusCode: status.NOT_FOUND,
-                body: JSON.stringify({
-                    error: 'Open House does not exist'
-                }),
-                headers
-            }
+            return response(status.NOT_FOUND, { error: 'Open House does not exist' });
         }
 
         const { value: openHouse, error } = openHouseSchema.validate(body);
         if (error) {
-            return {
-                statusCode: status.BAD_REQUEST,
-                body: JSON.stringify({
-                    error: error.details.map((detail) => detail.message).join('; ')
-                }),
-                headers
-            }
+            return response(status.BAD_REQUEST, {
+                error: error.details.map((detail) => detail.message).join('; ')
+            });
         }
 
         // Save new building item
@@ -167,10 +135,7 @@ async function updateOpenHouse(uuid, body) {
             }
         }).promise();
 
-        return {
-            statusCode: status.OK,
-            headers
-        };
+        return response(status.OK);
     } catch (err) {
         console.error(err);
         return err;
@@ -184,10 +149,7 @@ async function deleteOpenHouse(uuid) {
             Key: { uuid }
         }).promise();
 
-        return {
-            statusCode: status.OK,
-            headers
-        };
+        return response(status.OK);
     } catch (err) {
         console.error(err);
         return err;

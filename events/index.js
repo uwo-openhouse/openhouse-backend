@@ -11,9 +11,14 @@ const {
     AREAS_TABLE,
     OPEN_HOUSES_TABLE
 } = process.env;
-const headers = {
-    'Access-Control-Allow-Origin': '*'
-};
+
+const response = (statusCode, body) => ({
+    statusCode,
+    body: JSON.stringify(body),
+    headers: {
+        'Access-Control-Allow-Origin': '*'
+    }
+});
 
 const eventSchema = Joi.object({
     name: Joi.string().required(),
@@ -36,33 +41,18 @@ exports.handler = async (event, context) => {
 
             case 'PUT':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
-                    return {
-                        statusCode: status.BAD_REQUEST,
-                        body: JSON.stringify({
-                            error: 'Missing UUID in URL path'
-                        }),
-                        headers
-                    }
+                    return response(status.BAD_REQUEST, { error: 'Missing UUID in URL path' });
                 }
                 return updateEvent(event.pathParameters.uuid, JSON.parse(event.body));
 
             case 'DELETE':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
-                    return {
-                        statusCode: status.BAD_REQUEST,
-                        body: JSON.stringify({
-                            error: 'Missing UUID in URL path'
-                        }),
-                        headers
-                    }
+                    return response(status.BAD_REQUEST, { error: 'Missing UUID in URL path' });
                 }
                 return deleteEvent(event.pathParameters.uuid);
 
             default:
-                return {
-                    statusCode: status.METHOD_NOT_ALLOWED,
-                    headers
-                };
+                return response(status.METHOD_NOT_ALLOWED);
         }
     } catch (err) {
         console.err(err);
@@ -75,11 +65,7 @@ async function getEvents() {
         const data = await ddb.scan({ TableName: EVENTS_TABLE }).promise();
 
         // TODO: Only return events that belong to a visible=true open house when admin is not authenticated
-        return {
-            statusCode: status.OK,
-            body: JSON.stringify(data.Items),
-            headers
-        };
+        return response(status.OK, data.Items);
     } catch (err) {
         console.error(err);
         return err;
@@ -100,24 +86,14 @@ async function createEvent(body) {
         for (let i = 0; i < bodyEvents.length; i++) {
             const { value: event, error } = eventSchema.validate(bodyEvents[i]);
             if (error) {
-                return {
-                    statusCode: status.BAD_REQUEST,
-                    body: JSON.stringify({
-                        error: error.details.map((error) => error.message).join('; ') + ` for event with index ${i}`
-                    }),
-                    headers
-                }
+                return response(status.BAD_REQUEST, {
+                    error: error.details.map((error) => error.message).join('; ') + ` for event with index ${i}`
+                });
             }
 
             const verifyError = await verifyUUIDs(event.openHouse, event.area, event.building);
             if (verifyError) {
-                return {
-                    statusCode: status.BAD_REQUEST,
-                    body: JSON.stringify({
-                        error: verifyError + ` for event with index ${i}`
-                    }),
-                    headers
-                }
+                return response(status.BAD_REQUEST, { error: verifyError + ` for event with index ${i}` });
             }
 
             validEvents.push(event);
@@ -138,11 +114,7 @@ async function createEvent(body) {
             newEvents.push(newEvent);
         }
 
-        return {
-            statusCode: status.CREATED,
-            body: JSON.stringify(Array.isArray(body) ? newEvents : newEvents[0]),
-            headers
-        };
+        return response(status.CREATED, Array.isArray(body) ? newEvents : newEvents[0]);
     } catch (err) {
         console.error(err);
         return err;
@@ -157,35 +129,19 @@ async function updateEvent(uuid, body) {
             Key: { uuid }
         }).promise();
         if (!existingData.Item) {
-            return {
-                statusCode: status.NOT_FOUND,
-                body: JSON.stringify({
-                    error: 'Event does not exist'
-                }),
-                headers
-            }
+            return response(status.NOT_FOUND, { error: 'Event does not exist' });
         }
 
         const { value: event, error } = eventSchema.validate(body);
         if (error) {
-            return {
-                statusCode: status.BAD_REQUEST,
-                body: JSON.stringify({
-                    error: error.details.map((detail) => detail.message).join('; ')
-                }),
-                headers
-            }
+            return response(status.BAD_REQUEST, {
+                error: error.details.map((detail) => detail.message).join('; ')
+            });
         }
 
         const verifyError = await verifyUUIDs(event.openHouse, event.area, event.building);
         if (verifyError) {
-            return {
-                statusCode: status.BAD_REQUEST,
-                body: JSON.stringify({
-                    error: verifyError
-                }),
-                headers
-            }
+            return response(status.BAD_REQUEST, { error: verifyError });
         }
 
         // Save new building item
@@ -197,10 +153,7 @@ async function updateEvent(uuid, body) {
             }
         }).promise();
 
-        return {
-            statusCode: status.OK,
-            headers
-        };
+        return response(status.OK);
     } catch (err) {
         console.error(err);
         return err;
@@ -214,10 +167,7 @@ async function deleteEvent(uuid) {
             Key: { uuid }
         }).promise();
 
-        return {
-            statusCode: status.OK,
-            headers
-        };
+        return response(status.OK);
     } catch (err) {
         console.error(err);
         return err;
