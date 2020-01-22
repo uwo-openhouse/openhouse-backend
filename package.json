@@ -1,0 +1,11 @@
+{
+  "name": "openhouse-backend",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^24.9.0"
+  }
+}
