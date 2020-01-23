@@ -1,0 +1,17 @@
+{
+  "name": "openhouse-backend",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^24.9.0"
+  },
+  "dependencies": {
+    "openhouse-backend-areas": "./areas",
+    "openhouse-backend-buildings": "./buildings",
+    "openhouse-backend-events": "./events",
+    "openhouse-backend-openhouses": "./openhouses"
+  }
+}

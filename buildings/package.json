@@ -8,10 +8,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "jest"
-  },
-  "devDependencies": {
-    "jest": "^24.9.0"
+    "test": "../node_modules/.bin/jest"
   },
   "dependencies": {
     "@hapi/joi": "^17.0.2",

@@ -10,6 +10,19 @@ env:
   BUILD_BUCKET: uwo-openhouse-backend-builds
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - name: Yarn Install
+        run: yarn install
+      - name: Run Tests
+        run: yarn test --ci
   deploy:
     runs-on: ubuntu-latest
     steps:
