@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v1
-      - name: Yarn Install
+      - name: Setup Node
         uses: actions/setup-node@v1
         with:
           node-version: '12.x'
