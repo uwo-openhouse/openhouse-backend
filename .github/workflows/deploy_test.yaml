@@ -1,0 +1,51 @@
+name: Deploy to Test
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  STACK_NAME: openhouse-backend
+  BUILD_BUCKET: uwo-openhouse-backend-builds-test
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - name: Yarn Install
+        run: yarn install
+      - name: Run Tests
+        run: yarn test --ci
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_TEST }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_TEST }}
+          aws-region: us-east-2
+      - name: Configure PATH for Homebrew
+        run: echo "::add-path::/home/linuxbrew/.linuxbrew/bin"
+      - name: Install Homebrew & SAM CLI
+        run: |
+          sudo apt-get install build-essential curl file git
+          sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
+          brew --version
+          brew tap aws/tap
+          brew install aws-sam-cli
+          sam --version
+      - name: Build Template
+        run: sam build
+      - name: Deploy
+        run: sam deploy --stack-name $STACK_NAME --capabilities CAPABILITY_IAM --s3-bucket $BUILD_BUCKET
