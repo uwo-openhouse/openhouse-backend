@@ -5,6 +5,14 @@ Description: >
 
   Backend SAM & Infrastructure
 
+Parameters:
+  AdminUILoginDomain:
+    Type: String
+  LoginCallbackURL:
+    Type: String
+  LogoutRedirectURL:
+    Type: String
+
 Globals:
   Api:
     Cors:
@@ -298,9 +306,9 @@ Resources:
       SupportedIdentityProviders:
         - COGNITO
       CallbackURLs:
-        - https://frontend-app-todo.com/ # TODO: Replace with Admin UI
+        - !Ref LoginCallbackURL
       LogoutURLs:
-        - https://frontend-app-todo.com/login # TODO: Replace with Admin UI
+        - !Ref LogoutRedirectURL
       AllowedOAuthFlows:
         - implicit
       AllowedOAuthScopes:
@@ -329,7 +337,7 @@ Resources:
   AdminPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
-      Domain: uwo-openhouse
+      Domain: !Ref AdminUILoginDomain
       UserPoolId: !Ref AdminPool
 
 Outputs:
@@ -339,5 +347,5 @@ Outputs:
   AdminUIDomain:
     Description: "Admin UI Sign In Domain"
     Value: !Sub
-      - "https://${Domain}.auth.${AWS::Region}.amazoncognito.com/"
+      - "https://${AdminUILoginDomain}.auth.${AWS::Region}.amazoncognito.com/"
       - Domain: !Ref AdminPoolDomain

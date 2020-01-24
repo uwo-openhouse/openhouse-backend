@@ -8,6 +8,9 @@ on:
 env:
   STACK_NAME: openhouse-backend
   BUILD_BUCKET: uwo-openhouse-backend-builds
+  ADMIN_UI_DOMAIN: uwo-openhouse
+  LOGIN_CALLBACK_URL: https://frontend-app-todo.com/ # TODO: Replace with Admin UI
+  LOGOUT_REDIRECT_URL: https://frontend-app-todo.com/ # TODO: Replace with Admin UI
 
 jobs:
   test:
@@ -48,4 +51,8 @@ jobs:
       - name: Build Template
         run: sam build
       - name: Deploy
-        run: sam deploy --stack-name $STACK_NAME --capabilities CAPABILITY_IAM --s3-bucket $BUILD_BUCKET
+        run: >
+          sam deploy --stack-name $STACK_NAME --capabilities CAPABILITY_IAM --s3-bucket $BUILD_BUCKET
+          --parameter-overrides ParameterKey=AdminUILoginDomain,ParameterValue=$ADMIN_UI_DOMAIN
+          ParameterKey=LoginCallbackURL,ParameterValue=$LOGIN_CALLBACK_URL
+          ParameterKey=LogoutRedirectURL,ParameterValue=$LOGOUT_REDIRECT_URL
