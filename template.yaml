@@ -11,6 +11,14 @@ Globals:
       AllowMethods: "'OPTIONS,GET,POST,PUT,DELETE'"
       AllowHeaders: "'Content-Type'"
       AllowOrigin: "'*'"
+    Auth:
+      Authorizers:
+        CognitoAuthorizer:
+          AuthType: COGNITO_USER_POOLS
+          UserPoolArn: !GetAtt AdminPool.Arn
+          Identity:
+            Header: Authorization
+
   Function:
     Timeout: 3
     Runtime: nodejs12.x
@@ -30,16 +38,38 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref BuildingsTable
       Events:
-        Gateway:
+        GatewayGet:
           Type: Api
           Properties:
             Path: /buildings
-            Method: ANY
-        GatewayParam:
+            Method: GET
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /buildings
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/buildings:manage
+        GatewayPut:
           Type: Api
           Properties:
             Path: /buildings/{uuid}
-            Method: ANY
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/buildings:manage
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /buildings/{uuid}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/buildings:manage
     DependsOn: BuildingsTable
 
   AreasFunction:
@@ -54,16 +84,38 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref AreasTable
       Events:
-        Gateway:
+        GatewayGet:
           Type: Api
           Properties:
             Path: /areas
-            Method: ANY
-        GatewayParam:
+            Method: GET
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /areas
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/areas:manage
+        GatewayPut:
           Type: Api
           Properties:
             Path: /areas/{uuid}
-            Method: ANY
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/areas:manage
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /areas/{uuid}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/areas:manage
     DependsOn: AreasTable
 
   OpenHousesFunction:
@@ -78,16 +130,38 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref OpenHousesTable
       Events:
-        Gateway:
+        GatewayGet:
           Type: Api
           Properties:
             Path: /openhouses
-            Method: ANY
-        GatewayParam:
+            Method: GET
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /openhouses
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/openhouses:manage
+        GatewayPut:
           Type: Api
           Properties:
             Path: /openhouses/{uuid}
-            Method: ANY
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/openhouses:manage
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /openhouses/{uuid}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/openhouses:manage
     DependsOn: OpenHousesTable
 
   EventsFunction:
@@ -111,16 +185,38 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref BuildingsTable
       Events:
-        Gateway:
+        GatewayGet:
           Type: Api
           Properties:
             Path: /events
-            Method: ANY
-        GatewayParam:
+            Method: GET
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /events
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/events:manage
+        GatewayPut:
           Type: Api
           Properties:
             Path: /events/{uuid}
-            Method: ANY
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/events:manage
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /events/{uuid}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/events:manage
     DependsOn:
       - EventsTable
       - OpenHousesTable
@@ -208,8 +304,27 @@ Resources:
       AllowedOAuthFlows:
         - implicit
       AllowedOAuthScopes:
-        - openid
+        - uwo-openhouse-api/areas:manage
+        - uwo-openhouse-api/buildings:manage
+        - uwo-openhouse-api/events:manage
+        - uwo-openhouse-api/openhouses:manage
       GenerateSecret: false
+
+  AdminPoolResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      Identifier: uwo-openhouse-api
+      Name: Open House
+      Scopes:
+        - ScopeName: "areas:manage"
+          ScopeDescription: "Management of areas resource"
+        - ScopeName: "buildings:manage"
+          ScopeDescription: "Management of buildings resource"
+        - ScopeName: "events:manage"
+          ScopeDescription: "Management of events resource"
+        - ScopeName: "openhouses:manage"
+          ScopeDescription: "Management of open houses resource"
+      UserPoolId: !Ref AdminPool
 
   AdminPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
