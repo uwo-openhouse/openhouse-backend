@@ -32,7 +32,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00',
+                    startTime: '05:00',
+                    endTime: '06:00',
                     uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
                 }]
             });
@@ -49,7 +50,8 @@ describe('Open Houses Lambda', function () {
                 building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                 openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                 room: '2300',
-                time: '05:00',
+                startTime: '05:00',
+                endTime: '06:00',
                 uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
             }]);
         });
@@ -80,7 +82,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00'
+                    startTime: '05:00',
+                    endTime: '06:00',
                 })
             });
 
@@ -97,7 +100,8 @@ describe('Open Houses Lambda', function () {
                 building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                 openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                 room: '2300',
-                time: '05:00',
+                startTime: '05:00',
+                endTime: '06:00',
                 uuid: expect.stringMatching(uuidRegex)
             });
             expect(JSON.parse(result.body)).toEqual({
@@ -107,7 +111,8 @@ describe('Open Houses Lambda', function () {
                 building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                 openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                 room: '2300',
-                time: '05:00',
+                startTime: '05:00',
+                endTime: '06:00',
                 uuid: expect.stringMatching(uuidRegex)
             });
         });
@@ -123,7 +128,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00'
+                    startTime: '05:00',
+                    endTime: '06:00',
                 }, {
                     name: 'Engineering Presentation',
                     description: 'Engineery stuff',
@@ -131,7 +137,8 @@ describe('Open Houses Lambda', function () {
                     building: '16b81601-e89e-4ec6-a813-0528e7cf67f0',
                     openHouse: 'f5a92ea1-99e3-4063-8460-0bb518f0f388',
                     room: '400',
-                    time: '07:00'
+                    startTime: '06:00',
+                    endTime: '07:00',
                 }])
             });
 
@@ -144,7 +151,8 @@ describe('Open Houses Lambda', function () {
                 building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                 openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                 room: '2300',
-                time: '05:00',
+                startTime: '05:00',
+                endTime: '06:00',
                 uuid: expect.stringMatching(uuidRegex)
             });
             expect(putFn).toHaveBeenCalledWith({
@@ -154,7 +162,8 @@ describe('Open Houses Lambda', function () {
                 building: '16b81601-e89e-4ec6-a813-0528e7cf67f0',
                 openHouse: 'f5a92ea1-99e3-4063-8460-0bb518f0f388',
                 room: '400',
-                time: '07:00',
+                startTime: '06:00',
+                endTime: '07:00',
                 uuid: expect.stringMatching(uuidRegex)
             });
 
@@ -165,7 +174,8 @@ describe('Open Houses Lambda', function () {
                 building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                 openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                 room: '2300',
-                time: '05:00',
+                startTime: '05:00',
+                endTime: '06:00',
                 uuid: expect.stringMatching(uuidRegex)
             }, {
                 name: 'Engineering Presentation',
@@ -174,7 +184,8 @@ describe('Open Houses Lambda', function () {
                 building: '16b81601-e89e-4ec6-a813-0528e7cf67f0',
                 openHouse: 'f5a92ea1-99e3-4063-8460-0bb518f0f388',
                 room: '400',
-                time: '07:00',
+                startTime: '06:00',
+                endTime: '07:00',
                 uuid: expect.stringMatching(uuidRegex)
             }])
         });
@@ -189,7 +200,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00',
+                    startTime: '05:00',
+                    endTime: '06:00',
                 })
             });
 
@@ -207,7 +219,8 @@ describe('Open Houses Lambda', function () {
                     area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     room: '2300',
-                    time: '05:00'
+                    startTime: '05:00',
+                    endTime: '06:00',
                 }, {
                     name: 'Engineering Presentation',
                     description: 'Engineery stuff',
@@ -215,7 +228,8 @@ describe('Open Houses Lambda', function () {
                     building: '16b81601-e89e-4ec6-a813-0528e7cf67f0',
                     openHouse: 'f5a92ea1-99e3-4063-8460-0bb518f0f388',
                     room: '400',
-                    time: '07:00'
+                    startTime: '06:00',
+                    endTime: '07:00',
                 }])
             });
 
@@ -235,7 +249,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00',
+                    startTime: '05:00',
+                    endTime: '06:00',
                 })
             });
 
@@ -255,7 +270,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00',
+                    startTime: '05:00',
+                    endTime: '06:00',
                 })
             });
 
@@ -275,7 +291,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00',
+                    startTime: '05:00',
+                    endTime: '06:00',
                 })
             });
 
@@ -311,7 +328,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00'
+                    startTime: '05:00',
+                    endTime: '06:00',
                 }),
                 pathParameters: {
                     uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
@@ -332,7 +350,8 @@ describe('Open Houses Lambda', function () {
                 building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                 openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                 room: '2300',
-                time: '05:00',
+                startTime: '05:00',
+                endTime: '06:00',
                 uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
             });
         });
@@ -347,7 +366,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00'
+                    startTime: '05:00',
+                    endTime: '06:00',
                 }),
             });
 
@@ -368,7 +388,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00'
+                    startTime: '05:00',
+                    endTime: '06:00',
                 }),
                 pathParameters: {
                     uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
@@ -392,7 +413,8 @@ describe('Open Houses Lambda', function () {
                     area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
-                    time: '05:00'
+                    startTime: '05:00',
+                    endTime: '06:00',
                 }),
                 pathParameters: {
                     uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
@@ -415,7 +437,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00',
+                    startTime: '05:00',
+                    endTime: '06:00',
                 }),
                 pathParameters: {
                     uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
@@ -438,7 +461,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00',
+                    startTime: '05:00',
+                    endTime: '06:00',
                 }),
                 pathParameters: {
                     uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
@@ -461,7 +485,8 @@ describe('Open Houses Lambda', function () {
                     building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                     openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                     room: '2300',
-                    time: '05:00',
+                    startTime: '05:00',
+                    endTime: '06:00',
                 }),
                 pathParameters: {
                     uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'

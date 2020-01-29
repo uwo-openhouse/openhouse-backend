@@ -17,7 +17,8 @@ const eventSchema = Joi.object({
     building: Joi.string().uuid().required(),
     room: Joi.string().required(),
     openHouse: Joi.string().uuid().required(),
-    time: Joi.string().pattern(new RegExp('^(0[0-9]|1[0-9]|2[0-3]|[0-9]):[0-5][0-9]$'), { name: 'HH:mm' }).required()
+    startTime: Joi.string().pattern(new RegExp('^(0[0-9]|1[0-9]|2[0-3]|[0-9]):[0-5][0-9]$'), { name: 'HH:mm' }).required(),
+    endTime: Joi.string().pattern(new RegExp('^(0[0-9]|1[0-9]|2[0-3]|[0-9]):[0-5][0-9]$'), { name: 'HH:mm' }).required()
 });
 
 module.exports = (deps) => async (event) => {
