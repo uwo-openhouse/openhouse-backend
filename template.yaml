@@ -101,9 +101,12 @@ Resources:
           OPEN_HOUSES_TABLE: !Ref OpenHousesTable
           AREAS_TABLE: !Ref AreasTable
           BUILDINGS_TABLE: !Ref BuildingsTable
+          EVENT_ATTENDEES_TABLE: !Ref EventAttendeesTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref EventsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventAttendeesTable
         - DynamoDBReadPolicy:
             TableName: !Ref OpenHousesTable
         - DynamoDBReadPolicy:
@@ -126,6 +129,32 @@ Resources:
       - OpenHousesTable
       - AreasTable
       - BuildingsTable
+      - EventAttendeesTable
+
+  EventAttendeesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: event-attendees/
+      Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref EventAttendeesTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventAttendeesTable
+      Events:
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /events/{uuid}/attendees
+            Method: POST
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /events/{uuid}/attendees
+            Method: DELETE
+    DependsOn:
+      - EventAttendeesTable
 
   # DynamoDB Tables
 
@@ -169,6 +198,18 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: OpenHouse-Events
+      AttributeDefinitions:
+        - AttributeName: uuid
+          AttributeType: S # String
+      KeySchema:
+        - AttributeName: uuid
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  EventAttendeesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: OpenHouse-EventAttendees
       AttributeDefinitions:
         - AttributeName: uuid
           AttributeType: S # String
