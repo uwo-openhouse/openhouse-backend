@@ -5,19 +5,19 @@ const uuidRegex = new RegExp('^[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4
 
 describe('Areas Lambda', function () {
     describe('GET Requests', () => {
-        const scanFn = jest.fn();
+        const scanAreasFn = jest.fn();
         const handler = areas({
             dynamo: {
-                scan: scanFn
+                scanAreas: scanAreasFn
             }
         });
 
         afterEach(() => {
-            scanFn.mockClear();
+            scanAreasFn.mockReset();
         });
 
         test('returns areas from the database', async () => {
-            scanFn.mockResolvedValueOnce({
+            scanAreasFn.mockResolvedValueOnce({
                 Items: [{
                     name: "Faculty of Testing",
                     color: '#FFF',
@@ -39,15 +39,15 @@ describe('Areas Lambda', function () {
     });
 
     describe('POST Requests', () => {
-        const putFn = jest.fn().mockResolvedValue({});
+        const putAreaFn = jest.fn().mockResolvedValue({});
         const handler = areas({
             dynamo: {
-                put: putFn
+                putArea: putAreaFn
             }
         });
 
         afterEach(() => {
-            putFn.mockClear();
+            putAreaFn.mockClear();
         });
 
         test('accepts & writes a single valid area to the database', async () => {
@@ -60,8 +60,8 @@ describe('Areas Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(putFn).toHaveBeenCalledTimes(1);
-            expect(putFn).toHaveBeenCalledWith({
+            expect(putAreaFn).toHaveBeenCalledTimes(1);
+            expect(putAreaFn).toHaveBeenCalledWith({
                 name: 'Faculty of Testing',
                 color: '#000',
                 uuid: expect.stringMatching(uuidRegex)
@@ -86,13 +86,13 @@ describe('Areas Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(putFn).toHaveBeenCalledTimes(2);
-            expect(putFn).toHaveBeenCalledWith({
+            expect(putAreaFn).toHaveBeenCalledTimes(2);
+            expect(putAreaFn).toHaveBeenCalledWith({
                 name: 'Faculty of Testing',
                 color: '#000',
                 uuid: expect.stringMatching(uuidRegex)
             });
-            expect(putFn).toHaveBeenCalledWith({
+            expect(putAreaFn).toHaveBeenCalledWith({
                 name: 'Faculty of Testing #2',
                 color: '#ccc',
                 uuid: expect.stringMatching(uuidRegex)
@@ -119,7 +119,7 @@ describe('Areas Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('color');
-            expect(putFn).not.toHaveBeenCalled();
+            expect(putAreaFn).not.toHaveBeenCalled();
         });
 
         test('rejects when a list of areas contains an invalid area', async () => {
@@ -135,27 +135,27 @@ describe('Areas Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('color');
-            expect(putFn).not.toHaveBeenCalled();
+            expect(putAreaFn).not.toHaveBeenCalled();
         });
     });
 
     describe('PUT Requests', () => {
-        const getFn = jest.fn();
-        const putFn = jest.fn().mockResolvedValue({});
+        const getAreaFn = jest.fn();
+        const putAreaFn = jest.fn().mockResolvedValue({});
         const handler = areas({
             dynamo: {
-                get: getFn,
-                put: putFn
+                getArea: getAreaFn,
+                putArea: putAreaFn
             }
         });
 
         afterEach(() => {
-            getFn.mockClear();
-            putFn.mockClear();
+            getAreaFn.mockReset();
+            putAreaFn.mockClear();
         });
 
         test('accepts & updates a valid updated area to the database', async () => {
-            getFn.mockResolvedValueOnce({ Item: {} });
+            getAreaFn.mockResolvedValueOnce({ Item: {} });
             const result = await handler({
                 httpMethod: 'PUT',
                 body: JSON.stringify({
@@ -168,10 +168,10 @@ describe('Areas Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.OK);
-            expect(getFn).toHaveBeenCalledTimes(1);
-            expect(getFn).toHaveBeenCalledWith('fee567a4-c080-4ce9-8771-50aba119ecb1');
-            expect(putFn).toHaveBeenCalledTimes(1);
-            expect(putFn).toHaveBeenCalledWith({
+            expect(getAreaFn).toHaveBeenCalledTimes(1);
+            expect(getAreaFn).toHaveBeenCalledWith('fee567a4-c080-4ce9-8771-50aba119ecb1');
+            expect(putAreaFn).toHaveBeenCalledTimes(1);
+            expect(putAreaFn).toHaveBeenCalledWith({
                 name: 'Faculty of Testing Updated',
                 color: '#bbb',
                 uuid: 'fee567a4-c080-4ce9-8771-50aba119ecb1'
@@ -189,12 +189,12 @@ describe('Areas Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toEqual('Missing UUID in URL path');
-            expect(getFn).not.toHaveBeenCalled();
-            expect(putFn).not.toHaveBeenCalled();
+            expect(getAreaFn).not.toHaveBeenCalled();
+            expect(putAreaFn).not.toHaveBeenCalled();
         });
 
         test('rejects when the area UUID does not exist', async () => {
-            getFn.mockResolvedValueOnce({});
+            getAreaFn.mockResolvedValueOnce({});
             const result = await handler({
                 httpMethod: 'PUT',
                 body: JSON.stringify({
@@ -208,13 +208,13 @@ describe('Areas Lambda', function () {
 
             expect(result.statusCode).toEqual(status.NOT_FOUND);
             expect(JSON.parse(result.body).error).toEqual('Area does not exist');
-            expect(getFn).toHaveBeenCalledTimes(1);
-            expect(getFn).toHaveBeenCalledWith('fee567a4-c080-4ce9-8771-50aba119ecb1');
-            expect(putFn).not.toHaveBeenCalled();
+            expect(getAreaFn).toHaveBeenCalledTimes(1);
+            expect(getAreaFn).toHaveBeenCalledWith('fee567a4-c080-4ce9-8771-50aba119ecb1');
+            expect(putAreaFn).not.toHaveBeenCalled();
         });
 
         test('rejects when the updated area is invalid', async () => {
-            getFn.mockResolvedValueOnce({ Item: {} });
+            getAreaFn.mockResolvedValueOnce({ Item: {} });
             const result = await handler({
                 httpMethod: 'PUT',
                 body: JSON.stringify({
@@ -227,20 +227,20 @@ describe('Areas Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('name');
-            expect(putFn).not.toHaveBeenCalled();
+            expect(putAreaFn).not.toHaveBeenCalled();
         });
     });
 
     describe('DELETE Requests', () => {
-        const deleteFn = jest.fn().mockResolvedValue({});
+        const deleteAreaFn = jest.fn().mockResolvedValue({});
         const handler = areas({
             dynamo: {
-                delete: deleteFn
+                deleteArea: deleteAreaFn
             }
         });
 
         afterEach(() => {
-            deleteFn.mockClear();
+            deleteAreaFn.mockClear();
         });
 
         test('accepts & deletes an area from the database', async () => {
@@ -252,8 +252,8 @@ describe('Areas Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.OK);
-            expect(deleteFn).toHaveBeenCalledTimes(1);
-            expect(deleteFn).toHaveBeenCalledWith('fee567a4-c080-4ce9-8771-50aba119ecb1');
+            expect(deleteAreaFn).toHaveBeenCalledTimes(1);
+            expect(deleteAreaFn).toHaveBeenCalledWith('fee567a4-c080-4ce9-8771-50aba119ecb1');
         });
 
         test('rejects when the area UUID is missing', async () => {
@@ -263,7 +263,7 @@ describe('Areas Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toEqual('Missing UUID in URL path');
-            expect(deleteFn).not.toHaveBeenCalled();
+            expect(deleteAreaFn).not.toHaveBeenCalled();
         });
     })
 });

@@ -49,7 +49,7 @@ module.exports = (deps) => async (event) => {
 
 async function getOpenHouses(dynamo) {
     try {
-        const data = await dynamo.scan();
+        const data = await dynamo.scanOpenHouses();
 
         return response(status.OK, data.Items);
     } catch (err) {
@@ -88,7 +88,7 @@ async function createOpenHouse(dynamo, body) {
                 ...openHouse
             };
 
-            await dynamo.put(newOpenHouse);
+            await dynamo.putOpenHouse(newOpenHouse);
             newOpenHouses.push(newOpenHouse);
         }
 
@@ -102,7 +102,7 @@ async function createOpenHouse(dynamo, body) {
 async function updateOpenHouse(dynamo, uuid, body) {
     try {
         // Check to ensure uuid exists first
-        const existingData = await dynamo.get(uuid);
+        const existingData = await dynamo.getOpenHouse(uuid);
         if (!existingData.Item) {
             return response(status.NOT_FOUND, { error: 'Open House does not exist' });
         }
@@ -115,7 +115,7 @@ async function updateOpenHouse(dynamo, uuid, body) {
         }
 
         // Save new building item
-        await dynamo.put({ uuid, ...openHouse });
+        await dynamo.putOpenHouse({ uuid, ...openHouse });
 
         return response(status.OK);
     } catch (err) {
@@ -126,7 +126,7 @@ async function updateOpenHouse(dynamo, uuid, body) {
 
 async function deleteOpenHouse(dynamo, uuid) {
     try {
-        await dynamo.delete(uuid);
+        await dynamo.deleteOpenHouse(uuid);
 
         return response(status.OK);
     } catch (err) {

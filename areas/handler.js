@@ -47,7 +47,7 @@ module.exports = (deps) => async (event) => {
 
 async function getAreas(dynamo) {
     try {
-        const data = await dynamo.scan();
+        const data = await dynamo.scanAreas();
 
         return response(status.OK, data.Items);
     } catch (err) {
@@ -87,7 +87,7 @@ async function createArea(dynamo, body) {
                 ...area
             };
 
-            await dynamo.put(newArea);
+            await dynamo.putArea(newArea);
             newAreas.push(newArea);
         }
 
@@ -101,7 +101,7 @@ async function createArea(dynamo, body) {
 async function updateArea(dynamo, uuid, body) {
     try {
         // Check to ensure uuid exists first
-        const existingData = await dynamo.get(uuid);
+        const existingData = await dynamo.getArea(uuid);
         if (!existingData.Item) {
             return response(status.NOT_FOUND, { error: 'Area does not exist' });
         }
@@ -114,7 +114,7 @@ async function updateArea(dynamo, uuid, body) {
         }
 
         // Save new building item
-        await dynamo.put({ uuid, ...area });
+        await dynamo.putArea({ uuid, ...area });
 
         return response(status.OK);
     } catch (err) {
@@ -125,7 +125,7 @@ async function updateArea(dynamo, uuid, body) {
 
 async function deleteArea(dynamo, uuid) {
     try {
-        await dynamo.delete(uuid);
+        await dynamo.deleteArea(uuid);
 
         return response(status.OK);
     } catch (err) {
