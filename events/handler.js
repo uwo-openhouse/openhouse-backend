@@ -17,7 +17,8 @@ const eventSchema = Joi.object({
     building: Joi.string().uuid().required(),
     room: Joi.string().required(),
     openHouse: Joi.string().uuid().required(),
-    time: Joi.string().pattern(new RegExp('^(0[0-9]|1[0-9]|2[0-3]|[0-9]):[0-5][0-9]$'), { name: 'HH:mm' }).required()
+    startTime: Joi.string().pattern(new RegExp('^(0[0-9]|1[0-9]|2[0-3]|[0-9]):[0-5][0-9]$'), { name: 'HH:mm' }).required(),
+    endTime: Joi.string().pattern(new RegExp('^(0[0-9]|1[0-9]|2[0-3]|[0-9]):[0-5][0-9]$'), { name: 'HH:mm' }).required()
 });
 
 module.exports = (deps) => async (event) => {
@@ -52,9 +53,12 @@ module.exports = (deps) => async (event) => {
 
 async function getEvents(dynamo) {
     try {
-        const data = await dynamo.scan();
+        const data = await dynamo.scanEvents();
 
-        // TODO: Only return events that belong to a visible=true open house when admin is not authenticated
+        for (const event of data.Items) {
+            event.attendees = (await dynamo.getEventAttendees(event.uuid)).Item.attendees;
+        }
+
         return response(status.OK, data.Items);
     } catch (err) {
         console.error(err);
@@ -91,13 +95,24 @@ async function createEvent(dynamo, body) {
 
         const newEvents = [];
         for (const event of validEvents) {
+            const uuid = UUIDv4();
+
             const newEvent = {
-                uuid: UUIDv4(),
+                uuid,
                 ...event
             };
+            const newAttendees = {
+                uuid,
+                attendees: 0
+            };
 
-            await dynamo.put(newEvent);
-            newEvents.push(newEvent);
+            await dynamo.putEvent(newEvent);
+            await dynamo.putEventAttendees(newAttendees);
+
+            newEvents.push({
+                ...newEvent,
+                ...newAttendees
+            });
         }
 
         return response(status.CREATED, Array.isArray(body) ? newEvents : newEvents[0]);
@@ -108,11 +123,9 @@ async function createEvent(dynamo, body) {
 }
 
 async function updateEvent(dynamo, uuid, body) {
-    const { EVENTS_TABLE } = process.env;
-
     try {
         // Check to ensure uuid exists first
-        const existingData = await dynamo.get(EVENTS_TABLE, uuid);
+        const existingData = await dynamo.getEvent(uuid);
         if (!existingData.Item) {
             return response(status.NOT_FOUND, { error: 'Event does not exist' });
         }
@@ -130,7 +143,7 @@ async function updateEvent(dynamo, uuid, body) {
         }
 
         // Save new building item
-        await dynamo.put({ uuid, ...event });
+        await dynamo.putEvent({ uuid, ...event });
 
         return response(status.OK);
     } catch (err) {
@@ -141,7 +154,8 @@ async function updateEvent(dynamo, uuid, body) {
 
 async function deleteEvent(dynamo, uuid) {
     try {
-        await dynamo.delete(uuid);
+        await dynamo.deleteEvent(uuid);
+        await dynamo.deleteEventAttendees(uuid);
 
         return response(status.OK);
     } catch (err) {
@@ -151,23 +165,17 @@ async function deleteEvent(dynamo, uuid) {
 }
 
 async function verifyUUIDs(dynamo, openHouseUUID, areasUUID, buildingUUID) {
-    const {
-        BUILDINGS_TABLE,
-        AREAS_TABLE,
-        OPEN_HOUSES_TABLE
-    } = process.env;
-
-    const openHouseData = await dynamo.get(OPEN_HOUSES_TABLE, openHouseUUID);
+    const openHouseData = await dynamo.getOpenHouse(openHouseUUID);
     if (!openHouseData.Item) {
         return 'Specified open house does not exist';
     }
 
-    const areaData = await dynamo.get(AREAS_TABLE, areasUUID);
+    const areaData = await dynamo.getArea(areasUUID);
     if (!areaData.Item) {
         return 'Specified area does not exist';
     }
 
-    const buildingData = await dynamo.get(BUILDINGS_TABLE, buildingUUID);
+    const buildingData = await dynamo.getBuilding(buildingUUID);
     if (!buildingData.Item) {
         return 'Specified building does not exist';
     }

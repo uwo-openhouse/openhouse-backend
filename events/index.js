@@ -1,6 +1,10 @@
 const {
     AWS_REGION,
-    EVENTS_TABLE
+    EVENTS_TABLE,
+    EVENT_ATTENDEES_TABLE,
+    BUILDINGS_TABLE,
+    AREAS_TABLE,
+    OPEN_HOUSES_TABLE
 } = process.env;
 
 const aws = require('aws-sdk');
@@ -10,9 +14,17 @@ const ddb = new aws.DynamoDB.DocumentClient({ apiVersion: '2012-08-10' });
 // Use dependency injection to allow for easier unit testing
 module.exports.handler = require('./handler.js')({
     dynamo: {
-        scan: () => ddb.scan({ TableName: EVENTS_TABLE }).promise(),
-        put: (item) => ddb.put({ TableName: EVENTS_TABLE, Item: item }).promise(),
-        get: (table, uuid) => ddb.get({ TableName: table, Key: { uuid }}).promise(), // NOTE different than other lambdas
-        delete: (uuid) => ddb.delete({ TableName: EVENTS_TABLE, Key: { uuid }}).promise()
+        scanEvents: () => ddb.scan({ TableName: EVENTS_TABLE }).promise(),
+        getEvent: (uuid) => ddb.get({ TableName: EVENTS_TABLE, Key: { uuid }}).promise(),
+        putEvent: (item) => ddb.put({ TableName: EVENTS_TABLE, Item: item }).promise(),
+        deleteEvent: (uuid) => ddb.delete({ TableName: EVENTS_TABLE, Key: { uuid }}).promise(),
+
+        getEventAttendees: (uuid) => ddb.get({ TableName: EVENT_ATTENDEES_TABLE, Key: { uuid }}).promise(),
+        putEventAttendees: (item) => ddb.put({ TableName: EVENT_ATTENDEES_TABLE, Item: item }).promise(),
+        deleteEventAttendees: (uuid) => ddb.delete({ TableName: EVENT_ATTENDEES_TABLE, Key: { uuid }}).promise(),
+
+        getBuilding: (uuid) => ddb.get({ TableName: BUILDINGS_TABLE, Key: { uuid }}).promise(),
+        getArea: (uuid) => ddb.get({ TableName: AREAS_TABLE, Key: { uuid }}).promise(),
+        getOpenHouse: (uuid) => ddb.get({ TableName: OPEN_HOUSES_TABLE, Key: { uuid }}).promise(),
     }
 });

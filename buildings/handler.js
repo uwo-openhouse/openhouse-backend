@@ -50,7 +50,7 @@ module.exports = (deps) => async (event) => {
 
 async function getBuildings(dynamo) {
     try {
-        const data = await dynamo.scan();
+        const data = await dynamo.scanBuildings();
 
         return response(status.OK, data.Items);
     } catch (err) {
@@ -89,7 +89,7 @@ async function createBuilding(dynamo, body) {
                 ...building
             };
 
-            await dynamo.put(newBuilding);
+            await dynamo.putBuilding(newBuilding);
             newBuildings.push(newBuilding);
         }
 
@@ -103,7 +103,7 @@ async function createBuilding(dynamo, body) {
 async function updateBuilding(dynamo, uuid, body) {
     try {
         // Check to ensure uuid exists first
-        const existingData = await dynamo.get(uuid);
+        const existingData = await dynamo.getBuilding(uuid);
         if (!existingData.Item) {
             return response(status.NOT_FOUND, { error: 'Building does not exist' });
         }
@@ -116,7 +116,7 @@ async function updateBuilding(dynamo, uuid, body) {
         }
 
         // Save new building item
-        await dynamo.put({ uuid, ...building });
+        await dynamo.putBuilding({ uuid, ...building });
 
         return response(status.OK);
     } catch (err) {
@@ -127,7 +127,7 @@ async function updateBuilding(dynamo, uuid, body) {
 
 async function deleteBuilding(dynamo, uuid) {
     try {
-        await dynamo.delete(uuid);
+        await dynamo.deleteBuilding(uuid);
 
         return response(status.OK);
     } catch (err) {
