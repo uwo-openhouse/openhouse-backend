@@ -14,6 +14,9 @@ Globals:
   Function:
     Timeout: 3
     Runtime: nodejs12.x
+    Environment:
+      Variables:
+        ENDPOINT_OVERRIDE: ""
 
 Resources:
   # Lambda Functions & API Events
@@ -157,6 +160,7 @@ Resources:
       - EventAttendeesTable
 
   # DynamoDB Tables
+  # Remember to update local-test/env_*.json & setup_dynamo.js when adding/updating tables
 
   BuildingsTable:
     Type: AWS::DynamoDB::Table
