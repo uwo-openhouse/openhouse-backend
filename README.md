@@ -7,36 +7,45 @@ infrastructure in the CloudFormation stack to support the project (e.g. database
 
 ### Local requirements:
 
-- [Yarn](https://yarnpkg.com/en/docs/install)
+- Node.js & [Yarn](https://yarnpkg.com/en/docs/install)
 - [SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
 - [Docker](https://www.docker.com/products/docker-desktop)
 
 ```
-$ sam build
+$ yarn install
 ```
 
 ## Running API Locally
 
-Ensure the docker engine is running and run the following to start a local API server on `http://localhost:3000/`:
+Ensure the docker engine is running and perform the following steps:
 
 ```
-$ sam build
-$ sam local start-api
+$ yarn run dynamo
 ```
+This will run DynamoDB in memory in a docker container.
 
-## Deployment
+In another terminal run the setup script to configure necessary DynamoDB tables:
+```
+$ yarn run setup-dynamo
+```
+(Note: This must be re-run anytime the `yarn run dynamo` is restarted.)
 
-To deploy the application, run the following (TODO: Assign this job to CI/CD system):
+Finally, run the one of following to build and run the API based on your own OS (& restart this whenever you make a change):
 
 ```
-$ sam build
-$ sam deploy --stack-name openhouse-backend --capabilities CAPABILITY_IAM --s3-bucket uwo-openhouse-backend-builds --region us-east-2 --confirm-changeset
+$ yarn run start:win    // Windows
+$ yarn run start:mac    // Mac
+$ yarn run start:linux  // Linux
 ```
 
 ## Running tests
 
-```
-$ cd buildings/
-$ yarn test
-```
+Run from the root of the project or lambda function directories:
+`yarn test`
+
+## Deployment
+
+This application is continuously deployed on the `develop` to the test environment & `master` to the production
+environment.
+
 
