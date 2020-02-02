@@ -82,7 +82,7 @@ async function createBuilding(dynamo, body) {
             }
         }
 
-        const newBuildings = [];
+        const createdBuildings = [];
         for (const building of validBuildings) {
             const newBuilding = {
                 uuid: UUIDv4(),
@@ -90,10 +90,10 @@ async function createBuilding(dynamo, body) {
             };
 
             await dynamo.putBuilding(newBuilding);
-            newBuildings.push(newBuilding);
+            createdBuildings.push(newBuilding);
         }
 
-        return response(status.CREATED, Array.isArray(body) ? newBuildings : newBuildings[0]);
+        return response(status.CREATED, Array.isArray(body) ? createdBuildings : createdBuildings[0]);
     } catch (err) {
         console.error(err);
         return err;

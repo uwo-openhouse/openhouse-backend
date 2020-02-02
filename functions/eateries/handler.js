@@ -84,7 +84,7 @@ async function createEatery(dynamo, body) {
             validEateries.push(eatery);
         }
 
-        const newEateries = [];
+        const createdEateries = [];
         for (const eatery of validEateries) {
             const newEatery = {
                 uuid: UUIDv4(),
@@ -92,10 +92,10 @@ async function createEatery(dynamo, body) {
             };
 
             await dynamo.putEatery(newEatery);
-            newEateries.push(newEatery);
+            createdEateries.push(newEatery);
         }
 
-        return response(status.CREATED, Array.isArray(body) ? newEateries : newEateries[0]);
+        return response(status.CREATED, Array.isArray(body) ? createdEateries : createdEateries[0]);
     } catch (err) {
         console.error(err);
         return err;

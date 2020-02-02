@@ -93,7 +93,7 @@ async function createEvent(dynamo, body) {
             validEvents.push(event);
         }
 
-        const newEvents = [];
+        const createdEvents = [];
         for (const event of validEvents) {
             const uuid = UUIDv4();
 
@@ -109,13 +109,13 @@ async function createEvent(dynamo, body) {
             await dynamo.putEvent(newEvent);
             await dynamo.putEventAttendees(newAttendees);
 
-            newEvents.push({
+            createdEvents.push({
                 ...newEvent,
                 ...newAttendees
             });
         }
 
-        return response(status.CREATED, Array.isArray(body) ? newEvents : newEvents[0]);
+        return response(status.CREATED, Array.isArray(body) ? createdEvents : createdEvents[0]);
     } catch (err) {
         console.error(err);
         return err;
