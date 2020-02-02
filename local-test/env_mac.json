@@ -7,6 +7,11 @@
         "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",
         "TABLE_NAME": "OpenHouse-Buildings"
     },
+    "EateriesFunction": {
+        "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",
+        "EATERIES_TABLE": "OpenHouse-Eateries",
+        "BUILDINGS_TABLE": "OpenHouse-Buildings"
+    },
     "EventAttendeesFunction": {
         "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",
         "TABLE_NAME": "OpenHouse-EventAttendees"
