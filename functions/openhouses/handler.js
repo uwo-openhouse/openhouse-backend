@@ -129,7 +129,6 @@ async function updateOpenHouse(dynamo, uuid, body) {
             });
         }
 
-        // Save new building item
         await dynamo.putOpenHouse({ uuid, ...openHouse });
 
         return response(status.OK);
