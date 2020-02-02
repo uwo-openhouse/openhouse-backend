@@ -51,6 +51,10 @@ async function getOpenHouses(dynamo) {
     try {
         const data = await dynamo.scanOpenHouses();
 
+        for (const openHouse of data.Items) {
+            openHouse.attendees = (await dynamo.getOpenHouseAttendees(openHouse.uuid)).Item.attendees;
+        }
+
         return response(status.OK, data.Items);
     } catch (err) {
         console.error(err);
@@ -83,13 +87,24 @@ async function createOpenHouse(dynamo, body) {
 
         const newOpenHouses = [];
         for (const openHouse of validOpenHouses) {
+            const uuid = UUIDv4();
+
             const newOpenHouse = {
-                uuid: UUIDv4(),
+                uuid,
                 ...openHouse
+            };
+            const newAttendees = {
+                uuid,
+                attendees: 0
             };
 
             await dynamo.putOpenHouse(newOpenHouse);
-            newOpenHouses.push(newOpenHouse);
+            await dynamo.putOpenHouseAttendees(newAttendees);
+
+            newOpenHouses.push({
+                ...newOpenHouse,
+                ...newAttendees
+            });
         }
 
         return response(status.CREATED, Array.isArray(body) ? newOpenHouses : newOpenHouses[0]);
@@ -127,6 +142,7 @@ async function updateOpenHouse(dynamo, uuid, body) {
 async function deleteOpenHouse(dynamo, uuid) {
     try {
         await dynamo.deleteOpenHouse(uuid);
+        await dynamo.deleteOpenHouseAttendees(uuid);
 
         return response(status.OK);
     } catch (err) {

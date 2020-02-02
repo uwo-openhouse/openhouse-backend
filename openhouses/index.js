@@ -1,5 +1,6 @@
 const {
-    TABLE_NAME,
+    OPEN_HOUSES_TABLE,
+    OPEN_HOUSE_ATTENDEES_TABLE,
     ENDPOINT_OVERRIDE
 } = process.env;
 
@@ -20,9 +21,13 @@ if (ENDPOINT_OVERRIDE) {
 // Use dependency injection to allow for easier unit testing
 module.exports.handler = require('./handler.js')({
     dynamo: {
-        scanOpenHouses: () => ddb.scan({ TableName: TABLE_NAME }).promise(),
-        putOpenHouse: (item) => ddb.put({ TableName: TABLE_NAME, Item: item }).promise(),
-        getOpenHouse: (uuid) => ddb.get({ TableName: TABLE_NAME, Key: { uuid }}).promise(),
-        deleteOpenHouse: (uuid) => ddb.delete({ TableName: TABLE_NAME, Key: { uuid }}).promise()
+        scanOpenHouses: () => ddb.scan({ TableName: OPEN_HOUSES_TABLE }).promise(),
+        putOpenHouse: (item) => ddb.put({ TableName: OPEN_HOUSES_TABLE, Item: item }).promise(),
+        getOpenHouse: (uuid) => ddb.get({ TableName: OPEN_HOUSES_TABLE, Key: { uuid }}).promise(),
+        deleteOpenHouse: (uuid) => ddb.delete({ TableName: OPEN_HOUSES_TABLE, Key: { uuid }}).promise(),
+
+        getOpenHouseAttendees: (uuid) => ddb.get({ TableName: OPEN_HOUSE_ATTENDEES_TABLE, Key: { uuid }}).promise(),
+        putOpenHouseAttendees: (item) => ddb.put({ TableName: OPEN_HOUSE_ATTENDEES_TABLE, Item: item }).promise(),
+        deleteOpenHouseAttendees: (uuid) => ddb.delete({ TableName: OPEN_HOUSE_ATTENDEES_TABLE, Key: { uuid }}).promise(),
     }
 });
