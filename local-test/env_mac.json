@@ -21,6 +21,11 @@
     },
     "OpenHousesFunction": {
         "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",
-        "TABLE_NAME": "OpenHouse-OpenHouses"
+        "OPEN_HOUSES_TABLE": "OpenHouse-OpenHouses",
+        "OPEN_HOUSE_ATTENDEES_TABLE": "OpenHouse-OpenHouseAttendees"
+    },
+    "OpenHouseAttendeesFunction": {
+        "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",
+        "TABLE_NAME": "OpenHouse-OpenHouseAttendees"
     }
 }

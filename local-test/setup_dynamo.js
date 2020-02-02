@@ -17,6 +17,9 @@ const tables = [{
 }, {
     name: 'OpenHouse-OpenHouses',
     key: 'uuid'
+}, {
+    name: 'OpenHouse-OpenHouseAttendees',
+    key: 'uuid'
 }];
 
 const aws = require('aws-sdk');

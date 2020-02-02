@@ -76,10 +76,13 @@ Resources:
       Handler: index.handler
       Environment:
         Variables:
-          TABLE_NAME: !Ref OpenHousesTable
+          OPEN_HOUSES_TABLE: !Ref OpenHousesTable
+          OPEN_HOUSE_ATTENDEES_TABLE: !Ref OpenHouseAttendeesTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref OpenHousesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OpenHouseAttendeesTable
       Events:
         Gateway:
           Type: Api
@@ -91,7 +94,29 @@ Resources:
           Properties:
             Path: /openhouses/{uuid}
             Method: ANY
-    DependsOn: OpenHousesTable
+    DependsOn:
+      - OpenHousesTable
+      - OpenHouseAttendeesTable
+
+  OpenHouseAttendeesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: openhouse-attendees/
+      Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref OpenHouseAttendeesTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OpenHouseAttendeesTable
+      Events:
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /openhouses/{uuid}/attendees
+            Method: POST
+    DependsOn:
+      - OpenHouseAttendeesTable
 
   EventsFunction:
     Type: AWS::Serverless::Function
@@ -190,6 +215,18 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: OpenHouse-OpenHouses
+      AttributeDefinitions:
+        - AttributeName: uuid
+          AttributeType: S # String
+      KeySchema:
+        - AttributeName: uuid
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  OpenHouseAttendeesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: OpenHouse-OpenHouseAttendees
       AttributeDefinitions:
         - AttributeName: uuid
           AttributeType: S # String

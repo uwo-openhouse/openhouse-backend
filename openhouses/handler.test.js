@@ -6,14 +6,17 @@ const uuidRegex = new RegExp('^[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4
 describe('Open Houses Lambda', function () {
     describe('GET Requests', () => {
         const scanOpenHousesFn = jest.fn();
+        const getOpenHouseAttendeesFn = jest.fn();
         const handler = openHouses({
             dynamo: {
-                scanOpenHouses: scanOpenHousesFn
+                scanOpenHouses: scanOpenHousesFn,
+                getOpenHouseAttendees: getOpenHouseAttendeesFn
             }
         });
 
         afterEach(() => {
             scanOpenHousesFn.mockReset();
+            getOpenHouseAttendeesFn.mockReset();
         });
 
         test('returns open houses from the database', async () => {
@@ -26,6 +29,12 @@ describe('Open Houses Lambda', function () {
                     uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
                 }]
             });
+            getOpenHouseAttendeesFn.mockResolvedValueOnce({
+                Item: {
+                    uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d',
+                    attendees: 3
+                }
+            });
 
             const result = await handler({
                 httpMethod: 'GET'
@@ -37,21 +46,25 @@ describe('Open Houses Lambda', function () {
                 date: 1579660681,
                 info: 'Important Details',
                 visible: false,
-                uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
+                uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d',
+                attendees: 3
             }]);
         });
     });
 
     describe('POST Requests', () => {
         const putOpenHouseFn = jest.fn().mockResolvedValue({});
+        const putOpenHouseAttendeesFn = jest.fn().mockResolvedValue({});
         const handler = openHouses({
             dynamo: {
-                putOpenHouse: putOpenHouseFn
+                putOpenHouse: putOpenHouseFn,
+                putOpenHouseAttendees: putOpenHouseAttendeesFn
             }
         });
 
         afterEach(() => {
             putOpenHouseFn.mockClear();
+            putOpenHouseAttendeesFn.mockReset();
         });
 
         test('accepts & writes a single valid open house to the database', async () => {
@@ -74,11 +87,17 @@ describe('Open Houses Lambda', function () {
                 visible: false,
                 uuid: expect.stringMatching(uuidRegex)
             });
+            expect(putOpenHouseAttendeesFn).toHaveBeenCalledTimes(1);
+            expect(putOpenHouseAttendeesFn).toHaveBeenCalledWith({
+                uuid: expect.stringMatching(uuidRegex),
+                attendees: 0
+            });
             expect(JSON.parse(result.body)).toEqual({
                 name: 'Fall Open House 2020',
                 date: 1579660681,
                 info: 'Important Details',
                 visible: false,
+                attendees: 0,
                 uuid: expect.stringMatching(uuidRegex)
             });
         });
@@ -115,18 +134,25 @@ describe('Open Houses Lambda', function () {
                 visible: true,
                 uuid: expect.stringMatching(uuidRegex)
             });
+            expect(putOpenHouseAttendeesFn).toHaveBeenCalledTimes(2);
+            expect(putOpenHouseAttendeesFn).toHaveBeenCalledWith({
+                uuid: expect.stringMatching(uuidRegex),
+                attendees: 0
+            });
 
             expect(JSON.parse(result.body)).toEqual([{
                 name: 'Fall Open House 2020',
                 date: 1579660681,
                 info: 'Important Details',
                 visible: false,
+                attendees: 0,
                 uuid: expect.stringMatching(uuidRegex)
             }, {
                 name: 'Spring Open House 2020',
                 date: 1579620681,
                 info: 'Important Details',
                 visible: true,
+                attendees: 0,
                 uuid: expect.stringMatching(uuidRegex)
             }])
         });
@@ -144,6 +170,7 @@ describe('Open Houses Lambda', function () {
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('date');
             expect(putOpenHouseFn).not.toHaveBeenCalled();
+            expect(putOpenHouseAttendeesFn).not.toHaveBeenCalled();
         });
 
         test('rejects when a list of open houses contains an invalid open house', async () => {
@@ -164,6 +191,7 @@ describe('Open Houses Lambda', function () {
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('info');
             expect(putOpenHouseFn).not.toHaveBeenCalled();
+            expect(putOpenHouseAttendeesFn).not.toHaveBeenCalled();
         });
     });
 
@@ -271,14 +299,17 @@ describe('Open Houses Lambda', function () {
 
     describe('DELETE Requests', () => {
         const deleteOpenHouseFn = jest.fn().mockResolvedValue({});
+        const deleteOpenHouseAttendeesFn = jest.fn().mockResolvedValue({});
         const handler = openHouses({
             dynamo: {
-                deleteOpenHouse: deleteOpenHouseFn
+                deleteOpenHouse: deleteOpenHouseFn,
+                deleteOpenHouseAttendees: deleteOpenHouseAttendeesFn
             }
         });
 
         afterEach(() => {
             deleteOpenHouseFn.mockClear();
+            deleteOpenHouseAttendeesFn.mockClear();
         });
 
         test('accepts & deletes an open house from the database', async () => {
@@ -292,6 +323,8 @@ describe('Open Houses Lambda', function () {
             expect(result.statusCode).toEqual(status.OK);
             expect(deleteOpenHouseFn).toHaveBeenCalledTimes(1);
             expect(deleteOpenHouseFn).toHaveBeenCalledWith('db028071-7e1d-4d6b-8999-d3111b558f8d');
+            expect(deleteOpenHouseAttendeesFn).toHaveBeenCalledTimes(1);
+            expect(deleteOpenHouseAttendeesFn).toHaveBeenCalledWith('db028071-7e1d-4d6b-8999-d3111b558f8d');
         });
 
         test('rejects when the open house UUID is missing', async () => {
@@ -302,6 +335,7 @@ describe('Open Houses Lambda', function () {
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toEqual('Missing UUID in URL path');
             expect(deleteOpenHouseFn).not.toHaveBeenCalled();
+            expect(deleteOpenHouseAttendeesFn).not.toHaveBeenCalled();
         });
     })
 });
