@@ -24,7 +24,7 @@ Resources:
   BuildingsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: buildings/
+      CodeUri: functions/buildings/
       Handler: index.handler
       Environment:
         Variables:
@@ -48,7 +48,7 @@ Resources:
   AreasFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: areas/
+      CodeUri: functions/areas/
       Handler: index.handler
       Environment:
         Variables:
@@ -72,7 +72,7 @@ Resources:
   OpenHousesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: openhouses/
+      CodeUri: functions/openhouses/
       Handler: index.handler
       Environment:
         Variables:
@@ -101,7 +101,7 @@ Resources:
   OpenHouseAttendeesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: openhouse-attendees/
+      CodeUri: functions/openhouse-attendees/
       Handler: index.handler
       Environment:
         Variables:
@@ -121,7 +121,7 @@ Resources:
   EateriesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: eateries/
+      CodeUri: functions/eateries/
       Handler: index.handler
       Environment:
         Variables:
@@ -150,7 +150,7 @@ Resources:
   EventsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: events/
+      CodeUri: functions/events/
       Handler: index.handler
       Environment:
         Variables:
@@ -191,7 +191,7 @@ Resources:
   EventAttendeesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: event-attendees/
+      CodeUri: functions/event-attendees/
       Handler: index.handler
       Environment:
         Variables:

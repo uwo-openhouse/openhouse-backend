@@ -142,7 +142,6 @@ async function updateEvent(dynamo, uuid, body) {
             return response(status.BAD_REQUEST, { error: verifyError });
         }
 
-        // Save new building item
         await dynamo.putEvent({ uuid, ...event });
 
         return response(status.OK);

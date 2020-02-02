@@ -113,7 +113,6 @@ async function updateArea(dynamo, uuid, body) {
             });
         }
 
-        // Save new building item
         await dynamo.putArea({ uuid, ...area });
 
         return response(status.OK);

@@ -115,7 +115,6 @@ async function updateBuilding(dynamo, uuid, body) {
             });
         }
 
-        // Save new building item
         await dynamo.putBuilding({ uuid, ...building });
 
         return response(status.OK);

@@ -2400,33 +2400,45 @@ once@^1.3.0, once@^1.3.1, once@^1.4.0:
   dependencies:
     wrappy "1"
 
-openhouse-backend-areas@./areas:
+openhouse-backend-areas@./functions/areas:
   version "1.0.0"
   dependencies:
     "@hapi/joi" "^17.0.2"
     http-status "^1.4.2"
     uuid "^3.3.3"
 
-openhouse-backend-buildings@./buildings:
+openhouse-backend-buildings@./functions/buildings:
   version "1.0.0"
   dependencies:
     "@hapi/joi" "^17.0.2"
     http-status "^1.4.2"
     uuid "^3.3.3"
 
-openhouse-backend-event-attendees@./event-attendees:
-  version "1.0.0"
-  dependencies:
-    http-status "^1.4.2"
-
-openhouse-backend-events@./events:
+openhouse-backend-eateries@./functions/eateries:
   version "1.0.0"
   dependencies:
     "@hapi/joi" "^17.0.2"
     http-status "^1.4.2"
     uuid "^3.3.3"
 
-openhouse-backend-openhouses@./openhouses:
+openhouse-backend-event-attendees@./functions/event-attendees:
+  version "1.0.0"
+  dependencies:
+    http-status "^1.4.2"
+
+openhouse-backend-events@./functions/events:
+  version "1.0.0"
+  dependencies:
+    "@hapi/joi" "^17.0.2"
+    http-status "^1.4.2"
+    uuid "^3.3.3"
+
+openhouse-backend-openhouse-attendees@./functions/openhouse-attendees:
+  version "1.0.0"
+  dependencies:
+    http-status "^1.4.2"
+
+openhouse-backend-openhouses@./functions/openhouses:
   version "1.0.0"
   dependencies:
     "@hapi/joi" "^17.0.2"

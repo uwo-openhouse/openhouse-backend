@@ -16,10 +16,12 @@
     "js-yaml": "^3.13.1"
   },
   "dependencies": {
-    "openhouse-backend-areas": "./areas",
-    "openhouse-backend-buildings": "./buildings",
-    "openhouse-backend-event-attendees": "./event-attendees",
-    "openhouse-backend-events": "./events",
-    "openhouse-backend-openhouses": "./openhouses"
+    "openhouse-backend-areas": "./functions/areas",
+    "openhouse-backend-buildings": "./functions/buildings",
+    "openhouse-backend-eateries": "./functions/eateries",
+    "openhouse-backend-event-attendees": "./functions/event-attendees",
+    "openhouse-backend-events": "./functions/events",
+    "openhouse-backend-openhouse-attendees": "./functions/openhouse-attendees",
+    "openhouse-backend-openhouses": "./functions/openhouses"
   }
 }
