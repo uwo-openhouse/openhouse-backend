@@ -118,6 +118,35 @@ Resources:
     DependsOn:
       - OpenHouseAttendeesTable
 
+  EateriesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: eateries/
+      Handler: index.handler
+      Environment:
+        Variables:
+          EATERIES_TABLE: !Ref EateriesTable
+          BUILDINGS_TABLE: !Ref BuildingsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EateriesTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref BuildingsTable
+      Events:
+        Gateway:
+          Type: Api
+          Properties:
+            Path: /eateries
+            Method: ANY
+        GatewayParam:
+          Type: Api
+          Properties:
+            Path: /eateries/{uuid}
+            Method: ANY
+    DependsOn:
+      - EateriesTable
+      - BuildingsTable
+
   EventsFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -227,6 +256,18 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: OpenHouse-OpenHouseAttendees
+      AttributeDefinitions:
+        - AttributeName: uuid
+          AttributeType: S # String
+      KeySchema:
+        - AttributeName: uuid
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  EateriesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: OpenHouse-Eateries
       AttributeDefinitions:
         - AttributeName: uuid
           AttributeType: S # String

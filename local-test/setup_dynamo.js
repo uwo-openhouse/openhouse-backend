@@ -9,6 +9,9 @@ const tables = [{
     name: 'OpenHouse-Buildings',
     key: 'uuid'
 }, {
+    name: 'OpenHouse-Eateries',
+    key: 'uuid'
+}, {
     name: 'OpenHouse-EventAttendees',
     key: 'uuid'
 }, {
