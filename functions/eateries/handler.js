@@ -77,7 +77,7 @@ async function createEatery(dynamo, body) {
                 });
             }
 
-            if (!await buildingExists(dynamo, eatery.building)) {
+            if (!await dynamo.buildingExists(eatery.building)) {
                 return response(status.BAD_REQUEST, { error: `Specified building does not exist for eatery with index ${i}` });
             }
 
@@ -117,7 +117,7 @@ async function updateEatery(dynamo, uuid, body) {
             });
         }
 
-        if (!await buildingExists(dynamo, eatery.building)) {
+        if (!await dynamo.buildingExists(eatery.building)) {
             return response(status.BAD_REQUEST, { error: 'Specified building does not exist' });
         }
 
@@ -139,8 +139,4 @@ async function deleteEatery(dynamo, uuid) {
         console.error(err);
         return err;
     }
-}
-
-async function buildingExists(dynamo, uuid) {
-    return Boolean((await dynamo.getBuilding(uuid)).Item);
 }

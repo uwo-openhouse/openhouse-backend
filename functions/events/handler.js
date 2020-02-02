@@ -164,18 +164,15 @@ async function deleteEvent(dynamo, uuid) {
 }
 
 async function verifyUUIDs(dynamo, openHouseUUID, areasUUID, buildingUUID) {
-    const openHouseData = await dynamo.getOpenHouse(openHouseUUID);
-    if (!openHouseData.Item) {
+    if (!await dynamo.openHouseExists(openHouseUUID)) {
         return 'Specified open house does not exist';
     }
 
-    const areaData = await dynamo.getArea(areasUUID);
-    if (!areaData.Item) {
+    if (!await dynamo.areaExists(areasUUID)) {
         return 'Specified area does not exist';
     }
 
-    const buildingData = await dynamo.getBuilding(buildingUUID);
-    if (!buildingData.Item) {
+    if (!await dynamo.buildingExists(buildingUUID)) {
         return 'Specified building does not exist';
     }
 }

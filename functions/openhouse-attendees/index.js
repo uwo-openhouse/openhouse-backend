@@ -20,7 +20,7 @@ if (ENDPOINT_OVERRIDE) {
 // Use dependency injection to allow for easier unit testing
 module.exports.handler = require('./handler.js')({
     dynamo: {
-        getAttendees: (uuid) => ddb.get({ TableName: TABLE_NAME, Key: { uuid }}).promise(),
+        attendeesExist: async (uuid) => Boolean((await ddb.get({ TableName: TABLE_NAME, Key: { uuid }}).promise()).Item),
         incrementAttendees: (uuid) => ddb.update({
             TableName: TABLE_NAME,
             Key: { uuid },

@@ -63,31 +63,31 @@ describe('Events Lambda', function () {
     describe('POST Requests', () => {
         const putEventFn = jest.fn().mockResolvedValue({});
         const putEventAttendeesFn = jest.fn().mockResolvedValue({});
-        const getBuildingFn = jest.fn();
-        const getAreaFn = jest.fn();
-        const getOpenHouseFn = jest.fn();
+        const buildingExistsFn = jest.fn();
+        const areaExistsFn = jest.fn();
+        const openHouseExistsFn = jest.fn();
         const handler = events({
             dynamo: {
                 putEvent: putEventFn,
                 putEventAttendees: putEventAttendeesFn,
-                getBuilding: getBuildingFn,
-                getArea: getAreaFn,
-                getOpenHouse: getOpenHouseFn
+                buildingExists: buildingExistsFn,
+                areaExists: areaExistsFn,
+                openHouseExists: openHouseExistsFn
             }
         });
 
         afterEach(() => {
             putEventFn.mockClear();
             putEventAttendeesFn.mockClear();
-            getBuildingFn.mockReset();
-            getAreaFn.mockReset();
-            getOpenHouseFn.mockReset();
+            buildingExistsFn.mockReset();
+            areaExistsFn.mockReset();
+            openHouseExistsFn.mockReset();
         });
 
         test('accepts & writes a single valid open house to the database', async () => {
-            getBuildingFn.mockResolvedValueOnce({ Item: {} });
-            getAreaFn.mockResolvedValueOnce({ Item: {} });
-            getOpenHouseFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(true);
+            areaExistsFn.mockResolvedValueOnce(true);
+            openHouseExistsFn.mockResolvedValueOnce(true);
 
             const result = await handler({
                 httpMethod: 'POST',
@@ -104,9 +104,9 @@ describe('Events Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(getOpenHouseFn).toHaveBeenCalledWith('e3a8d98f-775a-46da-b977-f2fe1fa6f360');
-            expect(getAreaFn).toHaveBeenCalledWith('e1b0e6d0-b3b2-42bf-8d4c-9801f374989e');
-            expect(getBuildingFn).toHaveBeenCalledWith('89bb0745-b18d-4b8e-913c-4c768012c14d');
+            expect(openHouseExistsFn).toHaveBeenCalledWith('e3a8d98f-775a-46da-b977-f2fe1fa6f360');
+            expect(areaExistsFn).toHaveBeenCalledWith('e1b0e6d0-b3b2-42bf-8d4c-9801f374989e');
+            expect(buildingExistsFn).toHaveBeenCalledWith('89bb0745-b18d-4b8e-913c-4c768012c14d');
             expect(putEventFn).toHaveBeenCalledTimes(1);
             expect(putEventFn).toHaveBeenCalledWith({
                 name: 'Science Presentation',
@@ -139,9 +139,9 @@ describe('Events Lambda', function () {
         });
 
         test('accepts & writes a list of valid events to the database', async () => {
-            getBuildingFn.mockResolvedValue({ Item: {} });
-            getAreaFn.mockResolvedValue({ Item: {} });
-            getOpenHouseFn.mockResolvedValue({ Item: {} });
+            buildingExistsFn.mockResolvedValue(true);
+            areaExistsFn.mockResolvedValue(true);
+            openHouseExistsFn.mockResolvedValue(true);
 
             const result = await handler({
                 httpMethod: 'POST',
@@ -222,9 +222,9 @@ describe('Events Lambda', function () {
         });
 
         test('rejects when a single event is invalid', async () => {
-            getBuildingFn.mockResolvedValueOnce({ Item: {} });
-            getAreaFn.mockResolvedValueOnce({ Item: {} });
-            getOpenHouseFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(true);
+            areaExistsFn.mockResolvedValueOnce(true);
+            openHouseExistsFn.mockResolvedValueOnce(true);
 
             const result = await handler({
                 httpMethod: 'POST',
@@ -246,9 +246,9 @@ describe('Events Lambda', function () {
         });
 
         test('rejects when a list of events contains an invalid event', async () => {
-            getBuildingFn.mockResolvedValue({ Item: {} });
-            getAreaFn.mockResolvedValue({ Item: {} });
-            getOpenHouseFn.mockResolvedValue({ Item: {} });
+            buildingExistsFn.mockResolvedValue(true);
+            areaExistsFn.mockResolvedValue(true);
+            openHouseExistsFn.mockResolvedValue(true);
 
             const result = await handler({
                 httpMethod: 'POST',
@@ -279,9 +279,9 @@ describe('Events Lambda', function () {
         });
 
         test('rejects when an event has a non-existent open house', async () => {
-            getBuildingFn.mockResolvedValueOnce({ Item: {} });
-            getAreaFn.mockResolvedValueOnce({ Item: {} });
-            getOpenHouseFn.mockResolvedValueOnce({});
+            buildingExistsFn.mockResolvedValueOnce(true);
+            areaExistsFn.mockResolvedValueOnce(true);
+            openHouseExistsFn.mockResolvedValueOnce(false);
 
             const result = await handler({
                 httpMethod: 'POST',
@@ -304,9 +304,9 @@ describe('Events Lambda', function () {
         });
 
         test('rejects when an event has a non-existent area', async () => {
-            getBuildingFn.mockResolvedValueOnce({ Item: {} });
-            getAreaFn.mockResolvedValueOnce({});
-            getOpenHouseFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(true);
+            areaExistsFn.mockResolvedValueOnce(false);
+            openHouseExistsFn.mockResolvedValueOnce(true);
 
             const result = await handler({
                 httpMethod: 'POST',
@@ -329,9 +329,9 @@ describe('Events Lambda', function () {
         });
 
         test('rejects when an event has a non-existent building', async () => {
-            getBuildingFn.mockResolvedValueOnce({});
-            getAreaFn.mockResolvedValueOnce({ Item: {} });
-            getOpenHouseFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(false);
+            areaExistsFn.mockResolvedValueOnce(true);
+            openHouseExistsFn.mockResolvedValueOnce(true);
 
             const result = await handler({
                 httpMethod: 'POST',
@@ -357,32 +357,32 @@ describe('Events Lambda', function () {
     describe('PUT Requests', () => {
         const putEventFn = jest.fn().mockResolvedValue({});
         const getEventFn = jest.fn();
-        const getBuildingFn = jest.fn();
-        const getAreaFn = jest.fn();
-        const getOpenHouseFn = jest.fn();
+        const buildingExistsFn = jest.fn();
+        const areaExistsFn = jest.fn();
+        const openHouseExistsFn = jest.fn();
         const handler = events({
             dynamo: {
                 putEvent: putEventFn,
                 getEvent: getEventFn,
-                getBuilding: getBuildingFn,
-                getArea: getAreaFn,
-                getOpenHouse: getOpenHouseFn
+                buildingExists: buildingExistsFn,
+                areaExists: areaExistsFn,
+                openHouseExists: openHouseExistsFn
             }
         });
 
         afterEach(() => {
             putEventFn.mockClear();
             getEventFn.mockReset();
-            getBuildingFn.mockReset();
-            getAreaFn.mockReset();
-            getOpenHouseFn.mockReset();
+            buildingExistsFn.mockReset();
+            areaExistsFn.mockReset();
+            openHouseExistsFn.mockReset();
         });
 
         test('accepts & updates a valid updated event to the database', async () => {
             getEventFn.mockResolvedValueOnce({ Item: {} });
-            getBuildingFn.mockResolvedValueOnce({ Item: {} });
-            getAreaFn.mockResolvedValueOnce({ Item: {} });
-            getOpenHouseFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(true);
+            areaExistsFn.mockResolvedValueOnce(true);
+            openHouseExistsFn.mockResolvedValueOnce(true);
 
             const result = await handler({
                 httpMethod: 'PUT',
@@ -403,9 +403,9 @@ describe('Events Lambda', function () {
 
             expect(result.statusCode).toEqual(status.OK);
             expect(getEventFn).toHaveBeenCalledWith('ccfb14f5-41a7-4514-9aac-28440981c21a');
-            expect(getOpenHouseFn).toHaveBeenCalledWith('e3a8d98f-775a-46da-b977-f2fe1fa6f360');
-            expect(getAreaFn).toHaveBeenCalledWith('e1b0e6d0-b3b2-42bf-8d4c-9801f374989e');
-            expect(getBuildingFn).toHaveBeenCalledWith('89bb0745-b18d-4b8e-913c-4c768012c14d');
+            expect(openHouseExistsFn).toHaveBeenCalledWith('e3a8d98f-775a-46da-b977-f2fe1fa6f360');
+            expect(areaExistsFn).toHaveBeenCalledWith('e1b0e6d0-b3b2-42bf-8d4c-9801f374989e');
+            expect(buildingExistsFn).toHaveBeenCalledWith('89bb0745-b18d-4b8e-913c-4c768012c14d');
             expect(putEventFn).toHaveBeenCalledTimes(1);
             expect(putEventFn).toHaveBeenCalledWith({
                 name: 'Science Presentation',
@@ -493,9 +493,9 @@ describe('Events Lambda', function () {
 
         test('rejects when the updated event has a non-existent open house', async () => {
             getEventFn.mockResolvedValueOnce({ Item: {} });
-            getBuildingFn.mockResolvedValueOnce({ Item: {} });
-            getAreaFn.mockResolvedValueOnce({ Item: {} });
-            getOpenHouseFn.mockResolvedValueOnce({});
+            buildingExistsFn.mockResolvedValueOnce(true);
+            areaExistsFn.mockResolvedValueOnce(true);
+            openHouseExistsFn.mockResolvedValueOnce(false);
 
             const result = await handler({
                 httpMethod: 'PUT',
@@ -521,9 +521,9 @@ describe('Events Lambda', function () {
 
         test('rejects when the updated event has a non-existent area', async () => {
             getEventFn.mockResolvedValueOnce({ Item: {} });
-            getBuildingFn.mockResolvedValueOnce({ Item: {} });
-            getAreaFn.mockResolvedValueOnce({});
-            getOpenHouseFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(true);
+            areaExistsFn.mockResolvedValueOnce(false);
+            openHouseExistsFn.mockResolvedValueOnce(true);
 
             const result = await handler({
                 httpMethod: 'PUT',
@@ -549,9 +549,9 @@ describe('Events Lambda', function () {
 
         test('rejects when the updated event has a non-existent building', async () => {
             getEventFn.mockResolvedValueOnce({ Item: {} });
-            getBuildingFn.mockResolvedValueOnce({});
-            getAreaFn.mockResolvedValueOnce({ Item: {} });
-            getOpenHouseFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(false);
+            areaExistsFn.mockResolvedValueOnce(true);
+            openHouseExistsFn.mockResolvedValueOnce(true);
 
             const result = await handler({
                 httpMethod: 'PUT',

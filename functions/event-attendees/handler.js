@@ -34,7 +34,7 @@ module.exports = (deps) => async (event) => {
 
 async function incrementAttendees(dynamo, uuid) {
     try {
-        if (!await eventExists(dynamo, uuid)) {
+        if (!await dynamo.attendeesExist(uuid)) {
             return response(status.NOT_FOUND, { error: 'Event does not exist' });
         }
 
@@ -49,7 +49,7 @@ async function incrementAttendees(dynamo, uuid) {
 
 async function decrementAttendees(dynamo, uuid) {
     try {
-        if (!await eventExists(dynamo, uuid)) {
+        if (!await dynamo.attendeesExist(uuid)) {
             return response(status.NOT_FOUND, { error: 'Event does not exist' });
         }
 
@@ -65,8 +65,4 @@ async function decrementAttendees(dynamo, uuid) {
         console.error(err);
         return err;
     }
-}
-
-async function eventExists(dynamo, uuid) {
-    return Boolean((await dynamo.getAttendees(uuid)).Item);
 }

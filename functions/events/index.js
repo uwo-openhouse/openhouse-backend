@@ -33,8 +33,11 @@ module.exports.handler = require('./handler.js')({
         putEventAttendees: (item) => ddb.put({ TableName: EVENT_ATTENDEES_TABLE, Item: item }).promise(),
         deleteEventAttendees: (uuid) => ddb.delete({ TableName: EVENT_ATTENDEES_TABLE, Key: { uuid }}).promise(),
 
-        getBuilding: (uuid) => ddb.get({ TableName: BUILDINGS_TABLE, Key: { uuid }}).promise(),
-        getArea: (uuid) => ddb.get({ TableName: AREAS_TABLE, Key: { uuid }}).promise(),
-        getOpenHouse: (uuid) => ddb.get({ TableName: OPEN_HOUSES_TABLE, Key: { uuid }}).promise(),
+        buildingExists: async (uuid) =>
+            Boolean((await ddb.get({ TableName: BUILDINGS_TABLE, Key: { uuid }}).promise()).Item),
+        areaExists: async (uuid) =>
+            Boolean((await ddb.get({ TableName: AREAS_TABLE, Key: { uuid }}).promise()).Item),
+        openHouseExists: async (uuid) =>
+            Boolean((await ddb.get({ TableName: OPEN_HOUSES_TABLE, Key: { uuid }}).promise()).Item)
     }
 });
