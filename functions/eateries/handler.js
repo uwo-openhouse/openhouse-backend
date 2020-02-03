@@ -42,7 +42,7 @@ module.exports = (deps) => async (event) => {
                 return response(status.METHOD_NOT_ALLOWED);
         }
     } catch (err) {
-        console.err(err);
+        console.error(err);
         return err;
     }
 };
@@ -77,14 +77,14 @@ async function createEatery(dynamo, body) {
                 });
             }
 
-            if (!await buildingExists(dynamo, eatery.building)) {
+            if (!await dynamo.buildingExists(eatery.building)) {
                 return response(status.BAD_REQUEST, { error: `Specified building does not exist for eatery with index ${i}` });
             }
 
             validEateries.push(eatery);
         }
 
-        const newEateries = [];
+        const createdEateries = [];
         for (const eatery of validEateries) {
             const newEatery = {
                 uuid: UUIDv4(),
@@ -92,10 +92,10 @@ async function createEatery(dynamo, body) {
             };
 
             await dynamo.putEatery(newEatery);
-            newEateries.push(newEatery);
+            createdEateries.push(newEatery);
         }
 
-        return response(status.CREATED, Array.isArray(body) ? newEateries : newEateries[0]);
+        return response(status.CREATED, Array.isArray(body) ? createdEateries : createdEateries[0]);
     } catch (err) {
         console.error(err);
         return err;
@@ -117,7 +117,7 @@ async function updateEatery(dynamo, uuid, body) {
             });
         }
 
-        if (!await buildingExists(dynamo, eatery.building)) {
+        if (!await dynamo.buildingExists(eatery.building)) {
             return response(status.BAD_REQUEST, { error: 'Specified building does not exist' });
         }
 
@@ -139,8 +139,4 @@ async function deleteEatery(dynamo, uuid) {
         console.error(err);
         return err;
     }
-}
-
-async function buildingExists(dynamo, uuid) {
-    return Boolean((await dynamo.getBuilding(uuid)).Item);
 }

@@ -44,21 +44,21 @@ describe('Eateries Lambda', function () {
 
     describe('POST Requests', () => {
         const putEateryFn = jest.fn().mockResolvedValue({});
-        const getBuildingFn = jest.fn();
+        const buildingExistsFn = jest.fn();
         const handler = eateries({
             dynamo: {
                 putEatery: putEateryFn,
-                getBuilding: getBuildingFn
+                buildingExists: buildingExistsFn
             }
         });
 
         afterEach(() => {
             putEateryFn.mockClear();
-            getBuildingFn.mockReset();
+            buildingExistsFn.mockReset();
         });
 
         test('accepts & writes a single valid eatery to the database', async () => {
-            getBuildingFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(true);
             const result = await handler({
                 httpMethod: 'POST',
                 body: JSON.stringify({
@@ -78,7 +78,7 @@ describe('Eateries Lambda', function () {
                 building: '0b16d09b-bd73-4849-83f7-b3bcec909e20',
                 uuid: expect.stringMatching(uuidRegex)
             });
-            expect(getBuildingFn).toHaveBeenCalledWith('0b16d09b-bd73-4849-83f7-b3bcec909e20');
+            expect(buildingExistsFn).toHaveBeenCalledWith('0b16d09b-bd73-4849-83f7-b3bcec909e20');
             expect(JSON.parse(result.body)).toEqual({
                 name: 'The Grad Club',
                 openTime: '10:00',
@@ -89,7 +89,7 @@ describe('Eateries Lambda', function () {
         });
 
         test('accepts & writes a list of valid eateries to the database', async () => {
-            getBuildingFn.mockResolvedValue({ Item: {} });
+            buildingExistsFn.mockResolvedValue(true);
             const result = await handler({
                 httpMethod: 'POST',
                 body: JSON.stringify([{
@@ -138,7 +138,7 @@ describe('Eateries Lambda', function () {
         });
 
         test('rejects when a single eatery is invalid', async () => {
-            getBuildingFn.mockResolvedValue({ Item: {} });
+            buildingExistsFn.mockResolvedValue(true);
             const result = await handler({
                 httpMethod: 'POST',
                 body: JSON.stringify({
@@ -154,7 +154,7 @@ describe('Eateries Lambda', function () {
         });
 
         test('rejects when a list of eateries contains an invalid eatery', async () => {
-            getBuildingFn.mockResolvedValue({ Item: {} });
+            buildingExistsFn.mockResolvedValue(true);
             const result = await handler({
                 httpMethod: 'POST',
                 body: JSON.stringify([{
@@ -175,8 +175,7 @@ describe('Eateries Lambda', function () {
         });
 
         test('rejects when an eatery has a non-existent building', async () => {
-            getBuildingFn.mockResolvedValueOnce({});
-
+            buildingExistsFn.mockResolvedValueOnce(false);
             const result = await handler({
                 httpMethod: 'POST',
                 body: JSON.stringify({
@@ -196,24 +195,24 @@ describe('Eateries Lambda', function () {
     describe('PUT Requests', () => {
         const getEateryFn = jest.fn();
         const putEateryFn = jest.fn().mockResolvedValue({});
-        const getBuildingFn = jest.fn();
+        const buildingExistsFn = jest.fn();
         const handler = eateries({
             dynamo: {
                 getEatery: getEateryFn,
                 putEatery: putEateryFn,
-                getBuilding: getBuildingFn
+                buildingExists: buildingExistsFn
             }
         });
 
         afterEach(() => {
             getEateryFn.mockReset();
             putEateryFn.mockClear();
-            getBuildingFn.mockReset();
+            buildingExistsFn.mockReset();
         });
 
         test('accepts & updates a valid updated eatery to the database', async () => {
             getEateryFn.mockResolvedValueOnce({ Item: {} });
-            getBuildingFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(true);
             const result = await handler({
                 httpMethod: 'PUT',
                 body: JSON.stringify({
@@ -230,8 +229,7 @@ describe('Eateries Lambda', function () {
             expect(result.statusCode).toEqual(status.OK);
             expect(getEateryFn).toHaveBeenCalledTimes(1);
             expect(getEateryFn).toHaveBeenCalledWith('c24e551e-c914-4198-b3fc-d1d040f53a0f');
-            expect(getBuildingFn).toHaveBeenCalledTimes(1);
-            expect(getBuildingFn).toHaveBeenCalledWith('0b16d09b-bd73-4849-83f7-b3bcec909e20');
+            expect(buildingExistsFn).toHaveBeenCalledWith('0b16d09b-bd73-4849-83f7-b3bcec909e20');
             expect(putEateryFn).toHaveBeenCalledTimes(1);
             expect(putEateryFn).toHaveBeenCalledWith({
                 name: 'The Grad Club',
@@ -243,8 +241,6 @@ describe('Eateries Lambda', function () {
         });
 
         test('rejects when the eatery UUID is missing', async () => {
-            getEateryFn.mockResolvedValueOnce({ Item: {} });
-            getBuildingFn.mockResolvedValueOnce({ Item: {} });
             const result = await handler({
                 httpMethod: 'PUT',
                 body: JSON.stringify({
@@ -304,7 +300,7 @@ describe('Eateries Lambda', function () {
 
         test('rejects when the updated eatery has a non-existent building', async () => {
             getEateryFn.mockResolvedValueOnce({ Item: {} });
-            getBuildingFn.mockResolvedValueOnce({});
+            buildingExistsFn.mockResolvedValueOnce(false);
             const result = await handler({
                 httpMethod: 'PUT',
                 body: JSON.stringify({

@@ -26,6 +26,7 @@ module.exports.handler = require('./handler.js')({
         getEatery: (uuid) => ddb.get({ TableName: EATERIES_TABLE, Key: { uuid }}).promise(),
         deleteEatery: (uuid) => ddb.delete({ TableName: EATERIES_TABLE, Key: { uuid }}).promise(),
 
-        getBuilding: (uuid) => ddb.get({ TableName: BUILDINGS_TABLE, Key: { uuid }}).promise(),
+        buildingExists: async (uuid) =>
+            Boolean((await ddb.get({ TableName: BUILDINGS_TABLE, Key: { uuid }}).promise()).Item),
     }
 });
