@@ -10,47 +10,44 @@ const response = (statusCode, body) => ({
     }
 });
 
-const buildingSchema = Joi.object({
+const areaSchema = Joi.object({
     name: Joi.string().required(),
-    position: Joi.object({
-        lat: Joi.number().greater(-90).less(90).required(),
-        lng: Joi.number().greater(-180).less(180).required()
-    }).required()
+    color: Joi.string().regex(new RegExp('^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$'), { name: 'Hex Color Code' }).required()
 });
 
 module.exports = (deps) => async (event) => {
     try {
         switch (event.httpMethod) {
             case 'GET':
-                return getBuildings(deps.dynamo);
+                return getAreas(deps.dynamo);
 
             case 'POST':
-                return createBuilding(deps.dynamo, JSON.parse(event.body));
+                return createArea(deps.dynamo, JSON.parse(event.body));
 
             case 'PUT':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
                     return response(status.BAD_REQUEST, { error: 'Missing UUID in URL path' });
                 }
-                return updateBuilding(deps.dynamo, event.pathParameters.uuid, JSON.parse(event.body));
+                return updateArea(deps.dynamo, event.pathParameters.uuid, JSON.parse(event.body));
 
             case 'DELETE':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
                     return response(status.BAD_REQUEST, { error: 'Missing UUID in URL path' });
                 }
-                return deleteBuilding(deps.dynamo, event.pathParameters.uuid);
+                return deleteArea(deps.dynamo, event.pathParameters.uuid);
 
             default:
                 return response(status.METHOD_NOT_ALLOWED);
         }
     } catch (err) {
-        console.err(err);
+        console.error(err);
         return err;
     }
 };
 
-async function getBuildings(dynamo) {
+async function getAreas(dynamo) {
     try {
-        const data = await dynamo.scanBuildings();
+        const data = await dynamo.scanAreas();
 
         return response(status.OK, data.Items);
     } catch (err) {
@@ -59,64 +56,64 @@ async function getBuildings(dynamo) {
     }
 }
 
-async function createBuilding(dynamo, body) {
+async function createArea(dynamo, body) {
     try {
-        const bodyBuildings = [];
+        const bodyAreas = [];
 
         if (Array.isArray(body)) {
-            bodyBuildings.push(...body);
+            bodyAreas.push(...body);
         } else {
-            bodyBuildings.push(body);
+            bodyAreas.push(body);
         }
 
-        const validBuildings = [];
-        for (let i = 0; i < bodyBuildings.length; i++) {
-            const { value: building, error } = buildingSchema.validate(bodyBuildings[i]);
+        const validAreas = [];
+        for (let i = 0; i < bodyAreas.length; i++) {
+            const { value: area, error } = areaSchema.validate(bodyAreas[i]);
 
             if (error) {
+
                 return response(status.BAD_REQUEST, {
-                    error: error.details.map((error) => error.message).join('; ') + ` for building with index ${i}`
+                    error: error.details.map((error) => error.message).join('; ') + ` for area with index ${i}`
                 });
             } else {
-                validBuildings.push(building);
+                validAreas.push(area);
             }
         }
 
-        const newBuildings = [];
-        for (const building of validBuildings) {
-            const newBuilding = {
+        const createdAreas = [];
+        for (const area of validAreas) {
+            const newArea = {
                 uuid: UUIDv4(),
-                ...building
+                ...area
             };
 
-            await dynamo.putBuilding(newBuilding);
-            newBuildings.push(newBuilding);
+            await dynamo.putArea(newArea);
+            createdAreas.push(newArea);
         }
 
-        return response(status.CREATED, Array.isArray(body) ? newBuildings : newBuildings[0]);
+        return response(status.CREATED, Array.isArray(body) ? createdAreas : createdAreas[0]);
     } catch (err) {
         console.error(err);
         return err;
     }
 }
 
-async function updateBuilding(dynamo, uuid, body) {
+async function updateArea(dynamo, uuid, body) {
     try {
         // Check to ensure uuid exists first
-        const existingData = await dynamo.getBuilding(uuid);
+        const existingData = await dynamo.getArea(uuid);
         if (!existingData.Item) {
-            return response(status.NOT_FOUND, { error: 'Building does not exist' });
+            return response(status.NOT_FOUND, { error: 'Area does not exist' });
         }
 
-        const { value: building, error } = buildingSchema.validate(body);
+        const { value: area, error } = areaSchema.validate(body);
         if (error) {
             return response(status.BAD_REQUEST, {
                 error: error.details.map((detail) => detail.message).join('; ')
             });
         }
 
-        // Save new building item
-        await dynamo.putBuilding({ uuid, ...building });
+        await dynamo.putArea({ uuid, ...area });
 
         return response(status.OK);
     } catch (err) {
@@ -125,9 +122,9 @@ async function updateBuilding(dynamo, uuid, body) {
     }
 }
 
-async function deleteBuilding(dynamo, uuid) {
+async function deleteArea(dynamo, uuid) {
     try {
-        await dynamo.deleteBuilding(uuid);
+        await dynamo.deleteArea(uuid);
 
         return response(status.OK);
     } catch (err) {

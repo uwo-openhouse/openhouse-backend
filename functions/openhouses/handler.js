@@ -42,7 +42,7 @@ module.exports = (deps) => async (event) => {
                 return response(status.METHOD_NOT_ALLOWED);
         }
     } catch (err) {
-        console.err(err);
+        console.error(err);
         return err;
     }
 };
@@ -50,6 +50,10 @@ module.exports = (deps) => async (event) => {
 async function getOpenHouses(dynamo) {
     try {
         const data = await dynamo.scanOpenHouses();
+
+        for (const openHouse of data.Items) {
+            openHouse.attendees = (await dynamo.getOpenHouseAttendees(openHouse.uuid)).Item.attendees;
+        }
 
         return response(status.OK, data.Items);
     } catch (err) {
@@ -81,18 +85,29 @@ async function createOpenHouse(dynamo, body) {
             }
         }
 
-        const newOpenHouses = [];
+        const createdOpenHouses = [];
         for (const openHouse of validOpenHouses) {
+            const uuid = UUIDv4();
+
             const newOpenHouse = {
-                uuid: UUIDv4(),
+                uuid,
                 ...openHouse
+            };
+            const newAttendees = {
+                uuid,
+                attendees: 0
             };
 
             await dynamo.putOpenHouse(newOpenHouse);
-            newOpenHouses.push(newOpenHouse);
+            await dynamo.putOpenHouseAttendees(newAttendees);
+
+            createdOpenHouses.push({
+                ...newOpenHouse,
+                ...newAttendees
+            });
         }
 
-        return response(status.CREATED, Array.isArray(body) ? newOpenHouses : newOpenHouses[0]);
+        return response(status.CREATED, Array.isArray(body) ? createdOpenHouses : createdOpenHouses[0]);
     } catch (err) {
         console.error(err);
         return err;
@@ -114,7 +129,6 @@ async function updateOpenHouse(dynamo, uuid, body) {
             });
         }
 
-        // Save new building item
         await dynamo.putOpenHouse({ uuid, ...openHouse });
 
         return response(status.OK);
@@ -127,6 +141,7 @@ async function updateOpenHouse(dynamo, uuid, body) {
 async function deleteOpenHouse(dynamo, uuid) {
     try {
         await dynamo.deleteOpenHouse(uuid);
+        await dynamo.deleteOpenHouseAttendees(uuid);
 
         return response(status.OK);
     } catch (err) {

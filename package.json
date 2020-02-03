@@ -3,15 +3,25 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "dynamo": "docker run -p 8000:8000 amazon/dynamodb-local",
+    "setup-dynamo": "node local-test/setup_dynamo.js",
+    "start:mac": "sam build && sam local start-api --env-vars local-test/env_mac.json",
+    "start:win": "sam build && sam local start-api --env-vars local-test/env_win.json",
+    "start:linux": "sam build && sam local start-api --env-vars local-test/env_linux.json"
   },
   "devDependencies": {
-    "jest": "^24.9.0"
+    "aws-sdk": "^2.610.0",
+    "jest": "^24.9.0",
+    "js-yaml": "^3.13.1"
   },
   "dependencies": {
-    "openhouse-backend-areas": "./areas",
-    "openhouse-backend-buildings": "./buildings",
-    "openhouse-backend-events": "./events",
-    "openhouse-backend-openhouses": "./openhouses"
+    "openhouse-backend-areas": "./functions/areas",
+    "openhouse-backend-buildings": "./functions/buildings",
+    "openhouse-backend-eateries": "./functions/eateries",
+    "openhouse-backend-event-attendees": "./functions/event-attendees",
+    "openhouse-backend-events": "./functions/events",
+    "openhouse-backend-openhouse-attendees": "./functions/openhouse-attendees",
+    "openhouse-backend-openhouses": "./functions/openhouses"
   }
 }
