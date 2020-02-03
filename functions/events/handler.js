@@ -46,7 +46,7 @@ module.exports = (deps) => async (event) => {
                 return response(status.METHOD_NOT_ALLOWED);
         }
     } catch (err) {
-        console.err(err);
+        console.error(err);
         return err;
     }
 };
