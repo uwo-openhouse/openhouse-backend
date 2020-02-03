@@ -14,6 +14,9 @@ Globals:
   Function:
     Timeout: 3
     Runtime: nodejs12.x
+    Environment:
+      Variables:
+        ENDPOINT_OVERRIDE: ""
 
 Resources:
   # Lambda Functions & API Events
@@ -21,7 +24,7 @@ Resources:
   BuildingsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: buildings/
+      CodeUri: functions/buildings/
       Handler: index.handler
       Environment:
         Variables:
@@ -45,7 +48,7 @@ Resources:
   AreasFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: areas/
+      CodeUri: functions/areas/
       Handler: index.handler
       Environment:
         Variables:
@@ -69,14 +72,17 @@ Resources:
   OpenHousesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: openhouses/
+      CodeUri: functions/openhouses/
       Handler: index.handler
       Environment:
         Variables:
-          TABLE_NAME: !Ref OpenHousesTable
+          OPEN_HOUSES_TABLE: !Ref OpenHousesTable
+          OPEN_HOUSE_ATTENDEES_TABLE: !Ref OpenHouseAttendeesTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref OpenHousesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OpenHouseAttendeesTable
       Events:
         Gateway:
           Type: Api
@@ -88,12 +94,63 @@ Resources:
           Properties:
             Path: /openhouses/{uuid}
             Method: ANY
-    DependsOn: OpenHousesTable
+    DependsOn:
+      - OpenHousesTable
+      - OpenHouseAttendeesTable
+
+  OpenHouseAttendeesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/openhouse-attendees/
+      Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref OpenHouseAttendeesTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OpenHouseAttendeesTable
+      Events:
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /openhouses/{uuid}/attendees
+            Method: POST
+    DependsOn:
+      - OpenHouseAttendeesTable
+
+  EateriesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/eateries/
+      Handler: index.handler
+      Environment:
+        Variables:
+          EATERIES_TABLE: !Ref EateriesTable
+          BUILDINGS_TABLE: !Ref BuildingsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EateriesTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref BuildingsTable
+      Events:
+        Gateway:
+          Type: Api
+          Properties:
+            Path: /eateries
+            Method: ANY
+        GatewayParam:
+          Type: Api
+          Properties:
+            Path: /eateries/{uuid}
+            Method: ANY
+    DependsOn:
+      - EateriesTable
+      - BuildingsTable
 
   EventsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: events/
+      CodeUri: functions/events/
       Handler: index.handler
       Environment:
         Variables:
@@ -101,9 +158,12 @@ Resources:
           OPEN_HOUSES_TABLE: !Ref OpenHousesTable
           AREAS_TABLE: !Ref AreasTable
           BUILDINGS_TABLE: !Ref BuildingsTable
+          EVENT_ATTENDEES_TABLE: !Ref EventAttendeesTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref EventsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventAttendeesTable
         - DynamoDBReadPolicy:
             TableName: !Ref OpenHousesTable
         - DynamoDBReadPolicy:
@@ -126,8 +186,35 @@ Resources:
       - OpenHousesTable
       - AreasTable
       - BuildingsTable
+      - EventAttendeesTable
+
+  EventAttendeesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/event-attendees/
+      Handler: index.handler
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref EventAttendeesTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventAttendeesTable
+      Events:
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /events/{uuid}/attendees
+            Method: POST
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /events/{uuid}/attendees
+            Method: DELETE
+    DependsOn:
+      - EventAttendeesTable
 
   # DynamoDB Tables
+  # Remember to update local-test/env_*.json & setup_dynamo.js when adding/updating tables
 
   BuildingsTable:
     Type: AWS::DynamoDB::Table
@@ -165,10 +252,46 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
+  OpenHouseAttendeesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: OpenHouse-OpenHouseAttendees
+      AttributeDefinitions:
+        - AttributeName: uuid
+          AttributeType: S # String
+      KeySchema:
+        - AttributeName: uuid
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  EateriesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: OpenHouse-Eateries
+      AttributeDefinitions:
+        - AttributeName: uuid
+          AttributeType: S # String
+      KeySchema:
+        - AttributeName: uuid
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
   EventsTable:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: OpenHouse-Events
+      AttributeDefinitions:
+        - AttributeName: uuid
+          AttributeType: S # String
+      KeySchema:
+        - AttributeName: uuid
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  EventAttendeesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: OpenHouse-EventAttendees
       AttributeDefinitions:
         - AttributeName: uuid
           AttributeType: S # String

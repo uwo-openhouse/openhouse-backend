@@ -1,0 +1,36 @@
+{
+    "AreasFunction": {
+        "ENDPOINT_OVERRIDE": "http://127.0.0.1:8000",
+        "TABLE_NAME": "OpenHouse-Areas"
+    },
+    "BuildingsFunction": {
+        "ENDPOINT_OVERRIDE": "http://127.0.0.1:8000",
+        "TABLE_NAME": "OpenHouse-Buildings"
+    },
+    "EateriesFunction": {
+        "ENDPOINT_OVERRIDE": "http://127.0.0.1:8000",
+        "EATERIES_TABLE": "OpenHouse-Eateries",
+        "BUILDINGS_TABLE": "OpenHouse-Buildings"
+    },
+    "EventAttendeesFunction": {
+        "ENDPOINT_OVERRIDE": "http://127.0.0.1:8000",
+        "TABLE_NAME": "OpenHouse-EventAttendees"
+    },
+    "EventsFunction": {
+        "ENDPOINT_OVERRIDE": "http://127.0.0.1:8000",
+        "EVENTS_TABLE": "OpenHouse-Events",
+        "EVENT_ATTENDEES_TABLE": "OpenHouse-EventAttendees",
+        "AREAS_TABLE": "OpenHouse-Areas",
+        "BUILDINGS_TABLE": "OpenHouse-Buildings",
+        "OPEN_HOUSES_TABLE": "OpenHouse-OpenHouses"
+    },
+    "OpenHousesFunction": {
+        "ENDPOINT_OVERRIDE": "http://127.0.0.1:8000",
+        "OPEN_HOUSES_TABLE": "OpenHouse-OpenHouses",
+        "OPEN_HOUSE_ATTENDEES_TABLE": "OpenHouse-OpenHouseAttendees"
+    },
+    "OpenHouseAttendeesFunction": {
+        "ENDPOINT_OVERRIDE": "http://127.0.0.1:8000",
+        "TABLE_NAME": "OpenHouse-OpenHouseAttendees"
+    }
+}

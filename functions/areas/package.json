@@ -1,0 +1,18 @@
+{
+  "name": "openhouse-backend-areas",
+  "version": "1.0.0",
+  "description": "Backend SAM template & infrastructure",
+  "main": "index.js",
+  "repository": "https://github.com/uwo-openhouse/openhouse-backend",
+  "author": "Jordan Mathewson",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "../node_modules/.bin/jest"
+  },
+  "dependencies": {
+    "@hapi/joi": "^17.0.2",
+    "http-status": "^1.4.2",
+    "uuid": "^3.3.3"
+  }
+}
