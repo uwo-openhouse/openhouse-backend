@@ -215,16 +215,38 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref BuildingsTable
       Events:
-        Gateway:
+        GatewayGet:
           Type: Api
           Properties:
             Path: /eateries
-            Method: ANY
-        GatewayParam:
+            Method: GET
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /eateries
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/eateries:manage
+        GatewayPut:
           Type: Api
           Properties:
             Path: /eateries/{uuid}
-            Method: ANY
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/eateries:manage
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /eateries/{uuid}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/eateries:manage
     DependsOn:
       - EateriesTable
       - BuildingsTable
@@ -437,6 +459,7 @@ Resources:
       AllowedOAuthScopes:
         - uwo-openhouse-api/areas:manage
         - uwo-openhouse-api/buildings:manage
+        - uwo-openhouse-api/eateries:manage
         - uwo-openhouse-api/events:manage
         - uwo-openhouse-api/openhouses:manage
       GenerateSecret: false
@@ -451,6 +474,8 @@ Resources:
           ScopeDescription: "Management of areas resource"
         - ScopeName: "buildings:manage"
           ScopeDescription: "Management of buildings resource"
+        - ScopeName: "eateries:manage"
+          ScopeDescription: "Management of eateries resource"
         - ScopeName: "events:manage"
           ScopeDescription: "Management of events resource"
         - ScopeName: "openhouses:manage"
