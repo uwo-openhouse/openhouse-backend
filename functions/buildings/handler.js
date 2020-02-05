@@ -80,14 +80,12 @@ async function createBuilding(dynamo, body) {
 
     const createdBuildings = [];
     for (const building of validBuildings) {
-        const newBuilding = {
+        createdBuildings.push({
             uuid: UUIDv4(),
             ...building
-        };
-
-        await dynamo.putBuilding(newBuilding);
-        createdBuildings.push(newBuilding);
+        });
     }
+    await dynamo.createBuildings(createdBuildings);
 
     return response(status.CREATED, Array.isArray(body) ? createdBuildings : createdBuildings[0]);
 }

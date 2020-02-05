@@ -82,28 +82,30 @@ async function createOpenHouse(dynamo, body) {
     }
 
     const createdOpenHouses = [];
+    const createdOpenHouseAttendees = [];
+    const resultOpenHouses = [];
     for (const openHouse of validOpenHouses) {
         const uuid = UUIDv4();
 
-        const newOpenHouse = {
+        createdOpenHouses.push({
             uuid,
             ...openHouse
-        };
-        const newAttendees = {
+        });
+        createdOpenHouseAttendees.push({
             uuid,
             attendees: 0
-        };
-
-        await dynamo.putOpenHouse(newOpenHouse);
-        await dynamo.putOpenHouseAttendees(newAttendees);
-
-        createdOpenHouses.push({
-            ...newOpenHouse,
-            ...newAttendees
+        });
+        resultOpenHouses.push({
+            uuid,
+            attendees: 0,
+            ...openHouse
         });
     }
 
-    return response(status.CREATED, Array.isArray(body) ? createdOpenHouses : createdOpenHouses[0]);
+    await dynamo.createOpenHouses(createdOpenHouses);
+    await dynamo.createOpenHouseAttendees(createdOpenHouseAttendees);
+
+    return response(status.CREATED, Array.isArray(body) ? resultOpenHouses : resultOpenHouses[0]);
 }
 
 async function updateOpenHouse(dynamo, uuid, body) {

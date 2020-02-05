@@ -22,10 +22,28 @@ if (ENDPOINT_OVERRIDE) {
 module.exports.handler = require('./handler.js')({
     dynamo: {
         scanOpenHouses: () => ddb.scan({ TableName: OPEN_HOUSES_TABLE }).promise(),
+        createOpenHouses: (openHouses) => ddb.batchWrite({
+            RequestItems: {
+                [OPEN_HOUSES_TABLE]: openHouses.map((openHouse) => ({
+                    PutRequest: {
+                        Item: openHouse
+                    }
+                }))
+            }
+        }).promise(),
         putOpenHouse: (item) => ddb.put({ TableName: OPEN_HOUSES_TABLE, Item: item }).promise(),
         getOpenHouse: (uuid) => ddb.get({ TableName: OPEN_HOUSES_TABLE, Key: { uuid }}).promise(),
         deleteOpenHouse: (uuid) => ddb.delete({ TableName: OPEN_HOUSES_TABLE, Key: { uuid }}).promise(),
 
+        createOpenHouseAttendees: (openHouseAttendees) => ddb.batchWrite({
+            RequestItems: {
+                [OPEN_HOUSE_ATTENDEES_TABLE]: openHouseAttendees.map((openHouseAttendee) => ({
+                    PutRequest: {
+                        Item: openHouseAttendee
+                    }
+                }))
+            }
+        }).promise(),
         getOpenHouseAttendees: (uuid) => ddb.get({ TableName: OPEN_HOUSE_ATTENDEES_TABLE, Key: { uuid }}).promise(),
         putOpenHouseAttendees: (item) => ddb.put({ TableName: OPEN_HOUSE_ATTENDEES_TABLE, Item: item }).promise(),
         deleteOpenHouseAttendees: (uuid) => ddb.delete({ TableName: OPEN_HOUSE_ATTENDEES_TABLE, Key: { uuid }}).promise(),

@@ -62,18 +62,18 @@ describe('Open Houses Lambda', function () {
     });
 
     describe('POST Requests', () => {
-        const putOpenHouseFn = jest.fn().mockResolvedValue({});
-        const putOpenHouseAttendeesFn = jest.fn().mockResolvedValue({});
+        const createOpenHousesFn = jest.fn().mockResolvedValue({});
+        const createOpenHouseAttendeesFn = jest.fn().mockResolvedValue({});
         const handler = openHouses({
             dynamo: {
-                putOpenHouse: putOpenHouseFn,
-                putOpenHouseAttendees: putOpenHouseAttendeesFn
+                createOpenHouses: createOpenHousesFn,
+                createOpenHouseAttendees: createOpenHouseAttendeesFn
             }
         });
 
         afterEach(() => {
-            putOpenHouseFn.mockClear();
-            putOpenHouseAttendeesFn.mockReset();
+            createOpenHousesFn.mockClear();
+            createOpenHouseAttendeesFn.mockReset();
         });
 
         test('accepts & writes a single valid open house to the database', async () => {
@@ -88,19 +88,19 @@ describe('Open Houses Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(putOpenHouseFn).toHaveBeenCalledTimes(1);
-            expect(putOpenHouseFn).toHaveBeenCalledWith({
+            expect(createOpenHousesFn).toHaveBeenCalledTimes(1);
+            expect(createOpenHousesFn).toHaveBeenCalledWith([{
                 name: 'Fall Open House 2020',
                 date: 1579660681,
                 info: 'Important Details',
                 visible: false,
                 uuid: expect.stringMatching(uuidRegex)
-            });
-            expect(putOpenHouseAttendeesFn).toHaveBeenCalledTimes(1);
-            expect(putOpenHouseAttendeesFn).toHaveBeenCalledWith({
+            }]);
+            expect(createOpenHouseAttendeesFn).toHaveBeenCalledTimes(1);
+            expect(createOpenHouseAttendeesFn).toHaveBeenCalledWith([{
                 uuid: expect.stringMatching(uuidRegex),
                 attendees: 0
-            });
+            }]);
             expect(JSON.parse(result.body)).toEqual({
                 name: 'Fall Open House 2020',
                 date: 1579660681,
@@ -128,26 +128,28 @@ describe('Open Houses Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(putOpenHouseFn).toHaveBeenCalledTimes(2);
-            expect(putOpenHouseFn).toHaveBeenCalledWith({
+            expect(createOpenHousesFn).toHaveBeenCalledTimes(1);
+            expect(createOpenHousesFn).toHaveBeenCalledWith([{
                 name: 'Fall Open House 2020',
                 date: 1579660681,
                 info: 'Important Details',
                 visible: false,
                 uuid: expect.stringMatching(uuidRegex)
-            });
-            expect(putOpenHouseFn).toHaveBeenCalledWith({
+            }, {
                 name: 'Spring Open House 2020',
                 date: 1579620681,
                 info: 'Important Details',
                 visible: true,
                 uuid: expect.stringMatching(uuidRegex)
-            });
-            expect(putOpenHouseAttendeesFn).toHaveBeenCalledTimes(2);
-            expect(putOpenHouseAttendeesFn).toHaveBeenCalledWith({
+            }]);
+            expect(createOpenHouseAttendeesFn).toHaveBeenCalledTimes(1);
+            expect(createOpenHouseAttendeesFn).toHaveBeenCalledWith([{
                 uuid: expect.stringMatching(uuidRegex),
                 attendees: 0
-            });
+            }, {
+                uuid: expect.stringMatching(uuidRegex),
+                attendees: 0
+            }]);
 
             expect(JSON.parse(result.body)).toEqual([{
                 name: 'Fall Open House 2020',
@@ -178,8 +180,8 @@ describe('Open Houses Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('date');
-            expect(putOpenHouseFn).not.toHaveBeenCalled();
-            expect(putOpenHouseAttendeesFn).not.toHaveBeenCalled();
+            expect(createOpenHousesFn).not.toHaveBeenCalled();
+            expect(createOpenHouseAttendeesFn).not.toHaveBeenCalled();
         });
 
         test('rejects when a list of open houses contains an invalid open house', async () => {
@@ -199,12 +201,12 @@ describe('Open Houses Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('info');
-            expect(putOpenHouseFn).not.toHaveBeenCalled();
-            expect(putOpenHouseAttendeesFn).not.toHaveBeenCalled();
+            expect(createOpenHousesFn).not.toHaveBeenCalled();
+            expect(createOpenHouseAttendeesFn).not.toHaveBeenCalled();
         });
 
         test('responds with a message when a database error occurs', async () => {
-            putOpenHouseFn.mockRejectedValueOnce(new Error('testError'));
+            createOpenHousesFn.mockRejectedValueOnce(new Error('testError'));
             const result = await handler({
                 httpMethod: 'POST',
                 body: JSON.stringify({

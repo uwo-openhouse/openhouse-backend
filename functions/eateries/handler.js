@@ -82,14 +82,12 @@ async function createEatery(dynamo, body) {
 
     const createdEateries = [];
     for (const eatery of validEateries) {
-        const newEatery = {
+        createdEateries.push({
             uuid: UUIDv4(),
             ...eatery
-        };
-
-        await dynamo.putEatery(newEatery);
-        createdEateries.push(newEatery);
+        });
     }
+    await dynamo.createEateries(createdEateries);
 
     return response(status.CREATED, Array.isArray(body) ? createdEateries : createdEateries[0]);
 }
