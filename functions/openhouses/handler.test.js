@@ -35,7 +35,6 @@ describe('Open Houses Lambda', function () {
                     attendees: 3
                 }
             });
-
             const result = await handler({
                 httpMethod: 'GET'
             });
@@ -49,6 +48,16 @@ describe('Open Houses Lambda', function () {
                 uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d',
                 attendees: 3
             }]);
+        });
+
+        test('responds with a message when a database error occurs', async () => {
+            scanOpenHousesFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     });
 
@@ -193,6 +202,22 @@ describe('Open Houses Lambda', function () {
             expect(putOpenHouseFn).not.toHaveBeenCalled();
             expect(putOpenHouseAttendeesFn).not.toHaveBeenCalled();
         });
+
+        test('responds with a message when a database error occurs', async () => {
+            putOpenHouseFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'Fall Open House 2020',
+                    date: 1579660681,
+                    info: 'Important Details',
+                    visible: false
+                })
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('PUT Requests', () => {
@@ -295,6 +320,25 @@ describe('Open Houses Lambda', function () {
             expect(JSON.parse(result.body).error).toMatch('visible');
             expect(putOpenHouseFn).not.toHaveBeenCalled();
         });
+
+        test('responds with an error when a database error occurs', async () => {
+            getOpenHouseFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'Fall Open House 2020',
+                    date: 1579660681,
+                    info: 'Important Details',
+                    visible: false
+                }),
+                pathParameters: {
+                    uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('DELETE Requests', () => {
@@ -336,6 +380,19 @@ describe('Open Houses Lambda', function () {
             expect(JSON.parse(result.body).error).toEqual('Missing UUID in URL path');
             expect(deleteOpenHouseFn).not.toHaveBeenCalled();
             expect(deleteOpenHouseAttendeesFn).not.toHaveBeenCalled();
+        });
+
+        test('responds with an error when a database error occurs', async () => {
+            deleteOpenHouseFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     })
 });
