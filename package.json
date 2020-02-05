@@ -3,7 +3,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "jest",
+    "test": "jest --silent",
     "dynamo": "docker run -p 8000:8000 amazon/dynamodb-local",
     "setup-dynamo": "node local-test/setup_dynamo.js",
     "start:mac": "sam build && sam local start-api --env-vars local-test/env_mac.json",
@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "aws-sdk": "^2.610.0",
-    "jest": "^24.9.0",
+    "jest": "^25.1.0",
     "js-yaml": "^3.13.1"
   },
   "dependencies": {

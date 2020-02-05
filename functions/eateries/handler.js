@@ -21,122 +21,102 @@ module.exports = (deps) => async (event) => {
     try {
         switch (event.httpMethod) {
             case 'GET':
-                return getEateries(deps.dynamo);
+                return await getEateries(deps.dynamo);
 
             case 'POST':
-                return createEatery(deps.dynamo, JSON.parse(event.body));
+                return await createEatery(deps.dynamo, JSON.parse(event.body));
 
             case 'PUT':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
                     return response(status.BAD_REQUEST, { error: 'Missing UUID in URL path' });
                 }
-                return updateEatery(deps.dynamo, event.pathParameters.uuid, JSON.parse(event.body));
+                return await updateEatery(deps.dynamo, event.pathParameters.uuid, JSON.parse(event.body));
 
             case 'DELETE':
                 if (!event.pathParameters || !event.pathParameters.uuid) {
                     return response(status.BAD_REQUEST, { error: 'Missing UUID in URL path' });
                 }
-                return deleteEatery(deps.dynamo, event.pathParameters.uuid);
+                return await deleteEatery(deps.dynamo, event.pathParameters.uuid);
 
             default:
                 return response(status.METHOD_NOT_ALLOWED);
         }
     } catch (err) {
         console.error(err);
-        return err;
+        return response(status.INTERNAL_SERVER_ERROR, {
+            error: err.message
+        });
     }
 };
 
 async function getEateries(dynamo) {
-    try {
-        const data = await dynamo.scanEateries();
+    const data = await dynamo.scanEateries();
 
-        return response(status.OK, data.Items);
-    } catch (err) {
-        console.error(err);
-        return err;
-    }
+    return response(status.OK, data.Items);
 }
 
 async function createEatery(dynamo, body) {
-    try {
-        const bodyEateries = [];
+    const bodyEateries = [];
 
-        if (Array.isArray(body)) {
-            bodyEateries.push(...body);
-        } else {
-            bodyEateries.push(body);
-        }
-
-        const validEateries = [];
-        for (let i = 0; i < bodyEateries.length; i++) {
-            const { value: eatery, error } = eaterySchema.validate(bodyEateries[i]);
-            if (error) {
-                return response(status.BAD_REQUEST, {
-                    error: error.details.map((error) => error.message).join('; ') + ` for eatery with index ${i}`
-                });
-            }
-
-            if (!await dynamo.buildingExists(eatery.building)) {
-                return response(status.BAD_REQUEST, { error: `Specified building does not exist for eatery with index ${i}` });
-            }
-
-            validEateries.push(eatery);
-        }
-
-        const createdEateries = [];
-        for (const eatery of validEateries) {
-            const newEatery = {
-                uuid: UUIDv4(),
-                ...eatery
-            };
-
-            await dynamo.putEatery(newEatery);
-            createdEateries.push(newEatery);
-        }
-
-        return response(status.CREATED, Array.isArray(body) ? createdEateries : createdEateries[0]);
-    } catch (err) {
-        console.error(err);
-        return err;
+    if (Array.isArray(body)) {
+        bodyEateries.push(...body);
+    } else {
+        bodyEateries.push(body);
     }
-}
 
-async function updateEatery(dynamo, uuid, body) {
-    try {
-        // Check to ensure uuid exists first
-        const existingData = await dynamo.getEatery(uuid);
-        if (!existingData.Item) {
-            return response(status.NOT_FOUND, { error: 'Eatery does not exist' });
-        }
-
-        const { value: eatery, error } = eaterySchema.validate(body);
+    const validEateries = [];
+    for (let i = 0; i < bodyEateries.length; i++) {
+        const { value: eatery, error } = eaterySchema.validate(bodyEateries[i]);
         if (error) {
             return response(status.BAD_REQUEST, {
-                error: error.details.map((detail) => detail.message).join('; ')
+                error: error.details.map((error) => error.message).join('; ') + ` for eatery with index ${i}`
             });
         }
 
         if (!await dynamo.buildingExists(eatery.building)) {
-            return response(status.BAD_REQUEST, { error: 'Specified building does not exist' });
+            return response(status.BAD_REQUEST, { error: `Specified building does not exist for eatery with index ${i}` });
         }
 
-        await dynamo.putEatery({ uuid, ...eatery });
-
-        return response(status.OK);
-    } catch (err) {
-        console.error(err);
-        return err;
+        validEateries.push(eatery);
     }
+
+    const createdEateries = [];
+    for (const eatery of validEateries) {
+        createdEateries.push({
+            uuid: UUIDv4(),
+            ...eatery
+        });
+    }
+    await dynamo.createEateries(createdEateries);
+
+    return response(status.CREATED, Array.isArray(body) ? createdEateries : createdEateries[0]);
+}
+
+async function updateEatery(dynamo, uuid, body) {
+    // Check to ensure uuid exists first
+    const existingData = await dynamo.getEatery(uuid);
+    if (!existingData.Item) {
+        return response(status.NOT_FOUND, { error: 'Eatery does not exist' });
+    }
+
+    const { value: eatery, error } = eaterySchema.validate(body);
+    if (error) {
+        return response(status.BAD_REQUEST, {
+            error: error.details.map((detail) => detail.message).join('; ')
+        });
+    }
+
+    if (!await dynamo.buildingExists(eatery.building)) {
+        return response(status.BAD_REQUEST, { error: 'Specified building does not exist' });
+    }
+
+    await dynamo.putEatery({ uuid, ...eatery });
+
+    return response(status.OK);
 }
 
 async function deleteEatery(dynamo, uuid) {
-    try {
-        await dynamo.deleteEatery(uuid);
+    await dynamo.deleteEatery(uuid);
 
-        return response(status.OK);
-    } catch (err) {
-        console.error(err);
-        return err;
-    }
+    return response(status.OK);
 }
