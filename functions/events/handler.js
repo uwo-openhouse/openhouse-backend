@@ -54,13 +54,26 @@ module.exports = (deps) => async (event) => {
 };
 
 async function getEvents(dynamo) {
-    const data = await dynamo.scanEvents();
+    const events = (await dynamo.scanEvents()).Items;
 
-    for (const event of data.Items) {
-        event.attendees = (await dynamo.getEventAttendees(event.uuid)).Item.attendees;
+    if (events.length > 0) {
+        const eventAttendees = await dynamo.getEventAttendees(events.map((event) => event.uuid));
+
+        // Change array of eventAttendees objects to uuid => count map
+        const attendeesMap = eventAttendees.reduce((map, eventAttendee) => {
+            map[eventAttendee.uuid] = eventAttendee.attendees;
+            return map;
+        }, {});
+
+        for (const event of events) {
+            const attendees = attendeesMap[event.uuid];
+            if (attendees != null) {
+                event.attendees = attendees;
+            }
+        }
     }
 
-    return response(status.OK, data.Items);
+    return response(status.OK, events);
 }
 
 async function createEvent(dynamo, body) {

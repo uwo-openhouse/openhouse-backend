@@ -44,7 +44,13 @@ module.exports.handler = require('./handler.js')({
                 }))
             }
         }).promise(),
-        getOpenHouseAttendees: (uuid) => ddb.get({ TableName: OPEN_HOUSE_ATTENDEES_TABLE, Key: { uuid }}).promise(),
+        getOpenHouseAttendees: async (uuids) => (await ddb.batchGet({
+            RequestItems: {
+                [OPEN_HOUSE_ATTENDEES_TABLE]: {
+                    Keys: uuids.map((uuid) => ({ uuid }))
+                }
+            }
+        }).promise()).Responses[OPEN_HOUSE_ATTENDEES_TABLE],
         putOpenHouseAttendees: (item) => ddb.put({ TableName: OPEN_HOUSE_ATTENDEES_TABLE, Item: item }).promise(),
         deleteOpenHouseAttendees: (uuid) => ddb.delete({ TableName: OPEN_HOUSE_ATTENDEES_TABLE, Key: { uuid }}).promise(),
     }

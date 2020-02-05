@@ -31,14 +31,22 @@ describe('Events Lambda', function () {
                     startTime: '05:00',
                     endTime: '06:00',
                     uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }, {
+                    name: 'Faculty Presentation',
+                    description: 'Schooly stuff',
+                    area: 'bb38fbfe-444c-4d9a-8a6a-a675ff110ded',
+                    building: '1564889b-125d-4ec2-b571-8dbb648cfdfe',
+                    openHouse: '71c554c5-7ae3-4711-8c81-4370a536691e',
+                    room: '300',
+                    startTime: '010:00',
+                    endTime: '11:00',
+                    uuid: '0354a6ec-5577-4ef2-982e-5b0d0dff78b9'
                 }]
             });
-            getEventAttendeesFn.mockResolvedValueOnce(({
-                Item: {
-                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a',
-                    attendees: 4
-                }
-            }));
+            getEventAttendeesFn.mockResolvedValueOnce([
+                { uuid: '0354a6ec-5577-4ef2-982e-5b0d0dff78b9', attendees: 2 },
+                { uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a', attendees: 4 }
+            ]);
 
             const result = await handler({
                 httpMethod: 'GET'
@@ -56,7 +64,67 @@ describe('Events Lambda', function () {
                 endTime: '06:00',
                 attendees: 4,
                 uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+            }, {
+                name: 'Faculty Presentation',
+                description: 'Schooly stuff',
+                area: 'bb38fbfe-444c-4d9a-8a6a-a675ff110ded',
+                building: '1564889b-125d-4ec2-b571-8dbb648cfdfe',
+                openHouse: '71c554c5-7ae3-4711-8c81-4370a536691e',
+                room: '300',
+                startTime: '010:00',
+                endTime: '11:00',
+                attendees: 2,
+                uuid: '0354a6ec-5577-4ef2-982e-5b0d0dff78b9'
             }]);
+            expect(getEventAttendeesFn).toHaveBeenCalledWith([
+                'ccfb14f5-41a7-4514-9aac-28440981c21a', '0354a6ec-5577-4ef2-982e-5b0d0dff78b9'
+            ]);
+        });
+
+        test('handles an empty database', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(JSON.parse(result.body)).toEqual([]);
+            expect(getEventAttendeesFn).not.toHaveBeenCalled();
+        });
+
+        test('handles a missing attendee count', async () => {
+            scanEventsFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                    building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '2300',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }]
+            });
+            getEventAttendeesFn.mockResolvedValueOnce([]);
+
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(JSON.parse(result.body)).toEqual([{
+                name: 'Science Presentation',
+                description: 'Sciency stuff',
+                area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                room: '2300',
+                startTime: '05:00',
+                endTime: '06:00',
+                uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+            }]);
+            expect(getEventAttendeesFn).toHaveBeenCalledWith(['ccfb14f5-41a7-4514-9aac-28440981c21a']);
         });
 
         test('responds with a message when a database error occurs', async () => {

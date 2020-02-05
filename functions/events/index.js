@@ -47,7 +47,13 @@ module.exports.handler = require('./handler.js')({
                 }))
             }
         }).promise(),
-        getEventAttendees: (uuid) => ddb.get({ TableName: EVENT_ATTENDEES_TABLE, Key: { uuid }}).promise(),
+        getEventAttendees: async (uuids) => (await ddb.batchGet({
+            RequestItems: {
+                [EVENT_ATTENDEES_TABLE]: {
+                    Keys: uuids.map((uuid) => ({ uuid }))
+                }
+            }
+        }).promise()).Responses[EVENT_ATTENDEES_TABLE],
         putEventAttendees: (item) => ddb.put({ TableName: EVENT_ATTENDEES_TABLE, Item: item }).promise(),
         deleteEventAttendees: (uuid) => ddb.delete({ TableName: EVENT_ATTENDEES_TABLE, Key: { uuid }}).promise(),
 

@@ -50,13 +50,26 @@ module.exports = (deps) => async (event) => {
 };
 
 async function getOpenHouses(dynamo) {
-    const data = await dynamo.scanOpenHouses();
+    const openHouses = (await dynamo.scanOpenHouses()).Items;
 
-    for (const openHouse of data.Items) {
-        openHouse.attendees = (await dynamo.getOpenHouseAttendees(openHouse.uuid)).Item.attendees;
+    if (openHouses.length > 0) {
+        const openHouseAttendees = await dynamo.getOpenHouseAttendees(openHouses.map((event) => event.uuid));
+
+        // Change array of openHouseAttendees objects to uuid => count map
+        const attendeesMap = openHouseAttendees.reduce((map, openHouseAttendee) => {
+            map[openHouseAttendee.uuid] = openHouseAttendee.attendees;
+            return map;
+        }, {});
+
+        for (const openHouse of openHouses) {
+            const attendees = attendeesMap[openHouse.uuid];
+            if (attendees != null) {
+                openHouse.attendees = attendees;
+            }
+        }
     }
 
-    return response(status.OK, data.Items);
+    return response(status.OK, openHouses);
 }
 
 async function createOpenHouse(dynamo, body) {

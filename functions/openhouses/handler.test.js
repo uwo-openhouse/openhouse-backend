@@ -27,14 +27,18 @@ describe('Open Houses Lambda', function () {
                     info: 'Important Details',
                     visible: false,
                     uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
+                }, {
+                    name: 'Spring Open House 2020',
+                    date: 1579670000,
+                    info: 'Important Details',
+                    visible: true,
+                    uuid: '6a14b924-a0fd-420e-983b-8245483dbb66'
                 }]
             });
-            getOpenHouseAttendeesFn.mockResolvedValueOnce({
-                Item: {
-                    uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d',
-                    attendees: 3
-                }
-            });
+            getOpenHouseAttendeesFn.mockResolvedValueOnce([
+                { uuid: '6a14b924-a0fd-420e-983b-8245483dbb66', attendees: 10 },
+                { uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d', attendees: 3 }
+            ]);
             const result = await handler({
                 httpMethod: 'GET'
             });
@@ -47,7 +51,55 @@ describe('Open Houses Lambda', function () {
                 visible: false,
                 uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d',
                 attendees: 3
+            }, {
+                name: 'Spring Open House 2020',
+                date: 1579670000,
+                info: 'Important Details',
+                visible: true,
+                attendees: 10,
+                uuid: '6a14b924-a0fd-420e-983b-8245483dbb66'
             }]);
+            expect(getOpenHouseAttendeesFn).toHaveBeenCalledWith([
+                'db028071-7e1d-4d6b-8999-d3111b558f8d', '6a14b924-a0fd-420e-983b-8245483dbb66'
+            ]);
+        });
+
+        test('handles an empty database', async () => {
+            scanOpenHousesFn.mockResolvedValueOnce({ Items: [] });
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(JSON.parse(result.body)).toEqual([]);
+            expect(getOpenHouseAttendeesFn).not.toHaveBeenCalled();
+        });
+
+        test('handles a missing attendee count', async () => {
+            scanOpenHousesFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'Fall Open House 2020',
+                    date: 1579660681,
+                    info: 'Important Details',
+                    visible: false,
+                    uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
+                }]
+            });
+            getOpenHouseAttendeesFn.mockResolvedValueOnce([]);
+
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(JSON.parse(result.body)).toEqual([{
+                name: 'Fall Open House 2020',
+                date: 1579660681,
+                info: 'Important Details',
+                visible: false,
+                uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
+            }]);
+            expect(getOpenHouseAttendeesFn).toHaveBeenCalledWith(['db028071-7e1d-4d6b-8999-d3111b558f8d']);
         });
 
         test('responds with a message when a database error occurs', async () => {
