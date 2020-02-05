@@ -10,12 +10,14 @@ const response = (statusCode, body) => ({
     }
 });
 
+const EMPTY_STRING_PLACEHOLDER = '#EMPTY_STRING#';
+
 const eventSchema = Joi.object({
     name: Joi.string().required(),
     description: Joi.string(),
     area: Joi.string().uuid().required(),
     building: Joi.string().uuid().required(),
-    room: Joi.string().required(),
+    room: Joi.string().allow('').required(),
     openHouse: Joi.string().uuid().required(),
     startTime: Joi.string().pattern(new RegExp('^(0[0-9]|1[0-9]|2[0-3]|[0-9]):[0-5][0-9]$'), { name: 'HH:mm' }).required(),
     endTime: Joi.string().pattern(new RegExp('^(0[0-9]|1[0-9]|2[0-3]|[0-9]):[0-5][0-9]$'), { name: 'HH:mm' }).required()
@@ -73,6 +75,10 @@ async function getEvents(dynamo) {
         }
     }
 
+    for (const event of events) {
+        replaceEmptyStringPlaceholder(event);
+    }
+
     return response(status.OK, events);
 }
 
@@ -102,6 +108,10 @@ async function createEvent(dynamo, body) {
         validEvents.push(event);
     }
 
+    for (const event of validEvents) {
+        replaceEmptyString(event);
+    }
+
     const createdEvents = [];
     const createdEventAttendees = [];
     const resultEvents = [];
@@ -125,6 +135,10 @@ async function createEvent(dynamo, body) {
     await dynamo.createEvents(createdEvents);
     await dynamo.createEventAttendees(createdEventAttendees);
 
+    for (const event of resultEvents) {
+        replaceEmptyStringPlaceholder(event);
+    }
+
     return response(status.CREATED, Array.isArray(body) ? resultEvents : resultEvents[0]);
 }
 
@@ -146,6 +160,8 @@ async function updateEvent(dynamo, uuid, body) {
     if (verifyError) {
         return response(status.BAD_REQUEST, { error: verifyError });
     }
+
+    replaceEmptyString(event);
 
     await dynamo.putEvent({ uuid, ...event });
 
@@ -170,5 +186,17 @@ async function verifyUUIDs(dynamo, openHouseUUID, areasUUID, buildingUUID) {
 
     if (!await dynamo.buildingExists(buildingUUID)) {
         return 'Specified building does not exist';
+    }
+}
+
+function replaceEmptyString(event) {
+    if (event.room === '') {
+        event.room = EMPTY_STRING_PLACEHOLDER;
+    }
+}
+
+function replaceEmptyStringPlaceholder(event) {
+    if (event.room === EMPTY_STRING_PLACEHOLDER) {
+        event.room = '';
     }
 }

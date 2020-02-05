@@ -127,6 +127,41 @@ describe('Events Lambda', function () {
             expect(getEventAttendeesFn).toHaveBeenCalledWith(['ccfb14f5-41a7-4514-9aac-28440981c21a']);
         });
 
+        test('substitutes empty strings in the response', async () => {
+            scanEventsFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                    building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '#EMPTY_STRING#',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }]
+            });
+            getEventAttendeesFn.mockResolvedValueOnce([{ uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a', attendees: 4 }]);
+
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(JSON.parse(result.body)).toEqual([{
+                name: 'Science Presentation',
+                description: 'Sciency stuff',
+                area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                room: '',
+                startTime: '05:00',
+                endTime: '06:00',
+                attendees: 4,
+                uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+            }]);
+        });
+
         test('responds with a message when a database error occurs', async () => {
             scanEventsFn.mockRejectedValueOnce(new Error('testError'));
             const result = await handler({
@@ -299,6 +334,51 @@ describe('Events Lambda', function () {
                 attendees: 0,
                 uuid: expect.stringMatching(uuidRegex)
             }])
+        });
+
+        test('substitutes empty strings in the database', async () => {
+            buildingExistsFn.mockResolvedValueOnce(true);
+            areaExistsFn.mockResolvedValueOnce(true);
+            openHouseExistsFn.mockResolvedValueOnce(true);
+
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                    building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                })
+            });
+
+            expect(result.statusCode).toEqual(status.CREATED);
+            expect(createEventsFn).toHaveBeenCalledWith([{
+                name: 'Science Presentation',
+                description: 'Sciency stuff',
+                area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                room: '#EMPTY_STRING#',
+                startTime: '05:00',
+                endTime: '06:00',
+                uuid: expect.stringMatching(uuidRegex)
+            }]);
+            expect(JSON.parse(result.body)).toEqual({
+                name: 'Science Presentation',
+                description: 'Sciency stuff',
+                area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                room: '',
+                startTime: '05:00',
+                endTime: '06:00',
+                attendees: 0,
+                uuid: expect.stringMatching(uuidRegex)
+            });
         });
 
         test('rejects when a single event is invalid', async () => {
@@ -514,6 +594,43 @@ describe('Events Lambda', function () {
                 building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
                 openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
                 room: '2300',
+                startTime: '05:00',
+                endTime: '06:00',
+                uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+            });
+        });
+
+        test('substitutes empty strings in the database', async () => {
+            getEventFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(true);
+            areaExistsFn.mockResolvedValueOnce(true);
+            openHouseExistsFn.mockResolvedValueOnce(true);
+
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                    building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                }),
+                pathParameters: {
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(putEventFn).toHaveBeenCalledWith({
+                name: 'Science Presentation',
+                description: 'Sciency stuff',
+                area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                room: '#EMPTY_STRING#',
                 startTime: '05:00',
                 endTime: '06:00',
                 uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
