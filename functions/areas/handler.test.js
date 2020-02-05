@@ -24,7 +24,6 @@ describe('Areas Lambda', function () {
                     uuid: 'fee567a4-c080-4ce9-8771-50aba119ecb1'
                 }]
             });
-
             const result = await handler({
                 httpMethod: 'GET'
             });
@@ -35,6 +34,16 @@ describe('Areas Lambda', function () {
                 color: '#FFF',
                 uuid: 'fee567a4-c080-4ce9-8771-50aba119ecb1'
             }]);
+        });
+
+        test('responds with a message when a database error occurs', async () => {
+            scanAreasFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     });
 
@@ -137,6 +146,20 @@ describe('Areas Lambda', function () {
             expect(JSON.parse(result.body).error).toMatch('color');
             expect(putAreaFn).not.toHaveBeenCalled();
         });
+
+        test('responds with a message when a database error occurs', async () => {
+            putAreaFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'Faculty of Testing',
+                    color: '#000'
+                })
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('PUT Requests', () => {
@@ -229,6 +252,23 @@ describe('Areas Lambda', function () {
             expect(JSON.parse(result.body).error).toMatch('name');
             expect(putAreaFn).not.toHaveBeenCalled();
         });
+
+        test('responds with an error when a database error occurs', async () => {
+            getAreaFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'Faculty of Testing Updated',
+                    color: '#bbb'
+                }),
+                pathParameters: {
+                    uuid: 'fee567a4-c080-4ce9-8771-50aba119ecb1'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('DELETE Requests', () => {
@@ -264,6 +304,19 @@ describe('Areas Lambda', function () {
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toEqual('Missing UUID in URL path');
             expect(deleteAreaFn).not.toHaveBeenCalled();
+        });
+
+        test('responds with an error when a database error occurs', async () => {
+            deleteAreaFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'fee567a4-c080-4ce9-8771-50aba119ecb1'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     })
 });

@@ -46,6 +46,19 @@ describe('Event Attendees Lambda', function () {
             expect(attendeesExistFn).toHaveBeenCalledWith('ccfb14f5-41a7-4514-9aac-28440981c21a');
             expect(incrementAttendeesFn).not.toHaveBeenCalled();
         });
+
+        test('responds with an error when a database error occurs', async () => {
+            attendeesExistFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'POST',
+                pathParameters: {
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('DELETE Request (Decrement)', () => {
@@ -92,6 +105,19 @@ describe('Event Attendees Lambda', function () {
             expect(JSON.parse(result.body).error).toEqual('Event does not exist');
             expect(attendeesExistFn).toHaveBeenCalledWith('ccfb14f5-41a7-4514-9aac-28440981c21a');
             expect(decrementAttendeesFn).not.toHaveBeenCalled();
+        });
+
+        test('responds with an error when a database error occurs', async () => {
+            attendeesExistFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     })
 });

@@ -27,7 +27,6 @@ describe('Buildings Lambda', function () {
                     uuid: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00'
                 }]
             });
-
             const result = await handler({
                 httpMethod: 'GET'
             });
@@ -41,6 +40,16 @@ describe('Buildings Lambda', function () {
                 },
                 uuid: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00'
             }]);
+        });
+
+        test('responds with a message when a database error occurs', async () => {
+            scanBuildingsFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     });
 
@@ -144,6 +153,20 @@ describe('Buildings Lambda', function () {
             expect(JSON.parse(result.body).error).toMatch('name');
             expect(putBuildingFn).not.toHaveBeenCalled();
         });
+
+        test('responds with a message when a database error occurs', async () => {
+            putBuildingFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'North Campus Building',
+                    position: { lat: 35.111, lng: -12.222 }
+                })
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('PUT Requests', () => {
@@ -237,6 +260,23 @@ describe('Buildings Lambda', function () {
             expect(JSON.parse(result.body).error).toMatch('position.lat');
             expect(putBuildingFn).not.toHaveBeenCalled();
         });
+
+        test('responds with an error when a database error occurs', async () => {
+            getBuildingFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'North Campus Building',
+                    position: { lat: 35.111, lng: -12.222 }
+                }),
+                pathParameters: {
+                    uuid: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('DELETE Requests', () => {
@@ -272,6 +312,19 @@ describe('Buildings Lambda', function () {
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toEqual('Missing UUID in URL path');
             expect(deleteBuildingFn).not.toHaveBeenCalled();
+        });
+
+        test('responds with an error when a database error occurs', async () => {
+            deleteBuildingFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     })
 });

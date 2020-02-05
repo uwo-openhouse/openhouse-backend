@@ -26,7 +26,6 @@ describe('Eateries Lambda', function () {
                     building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
                 }]
             });
-
             const result = await handler({
                 httpMethod: 'GET'
             });
@@ -39,6 +38,16 @@ describe('Eateries Lambda', function () {
                 uuid: 'b77afbf8-25a9-4752-90a3-93167e886245',
                 building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
             }]);
+        });
+
+        test('responds with a message when a database error occurs', async () => {
+            scanEateriesFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     });
 
@@ -190,6 +199,22 @@ describe('Eateries Lambda', function () {
             expect(JSON.parse(result.body).error).toMatch('building');
             expect(putEateryFn).not.toHaveBeenCalled();
         });
+
+        test('responds with a message when a database error occurs', async () => {
+            buildingExistsFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'The Grad Club',
+                    openTime: '10:00',
+                    closeTime: '22:00',
+                    building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
+                })
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('PUT Requests', () => {
@@ -318,6 +343,25 @@ describe('Eateries Lambda', function () {
             expect(JSON.parse(result.body).error).toMatch('building');
             expect(putEateryFn).not.toHaveBeenCalled();
         });
+
+        test('responds with an error when a database error occurs', async () => {
+            getEateryFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'The Grad Club',
+                    openTime: '10:00',
+                    closeTime: '22:00',
+                    building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
+                }),
+                pathParameters: {
+                    uuid: 'c24e551e-c914-4198-b3fc-d1d040f53a0f'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('DELETE Requests', () => {
@@ -353,6 +397,19 @@ describe('Eateries Lambda', function () {
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toEqual('Missing UUID in URL path');
             expect(deleteEateryFn).not.toHaveBeenCalled();
+        });
+
+        test('responds with an error when a database error occurs', async () => {
+            deleteEateryFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'c24e551e-c914-4198-b3fc-d1d040f53a0f'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     })
 });

@@ -58,6 +58,16 @@ describe('Events Lambda', function () {
                 uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
             }]);
         });
+
+        test('responds with a message when a database error occurs', async () => {
+            scanEventsFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('POST Requests', () => {
@@ -352,6 +362,26 @@ describe('Events Lambda', function () {
             expect(putEventFn).not.toHaveBeenCalled();
             expect(putEventAttendeesFn).not.toHaveBeenCalled();
         });
+
+        test('responds with a message when a database error occurs', async () => {
+            openHouseExistsFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                    building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '2300',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                })
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('PUT Requests', () => {
@@ -574,6 +604,29 @@ describe('Events Lambda', function () {
             expect(JSON.parse(result.body).error).toMatch('building');
             expect(putEventFn).not.toHaveBeenCalled();
         });
+
+        test('responds with an error when a database error occurs', async () => {
+            getEventFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                    building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '2300',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                }),
+                pathParameters: {
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('DELETE Requests', () => {
@@ -613,6 +666,19 @@ describe('Events Lambda', function () {
             expect(JSON.parse(result.body).error).toEqual('Missing UUID in URL path');
             expect(deleteEventFn).not.toHaveBeenCalled();
             expect(deleteEventAttendeesFn).not.toHaveBeenCalled();
+        });
+
+        test('responds with an error when a database error occurs', async () => {
+            deleteEventFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     })
 });
