@@ -48,15 +48,15 @@ describe('Areas Lambda', function () {
     });
 
     describe('POST Requests', () => {
-        const putAreaFn = jest.fn().mockResolvedValue({});
+        const createAreasFn = jest.fn().mockResolvedValue({});
         const handler = areas({
             dynamo: {
-                putArea: putAreaFn
+                createAreas: createAreasFn
             }
         });
 
         afterEach(() => {
-            putAreaFn.mockClear();
+            createAreasFn.mockClear();
         });
 
         test('accepts & writes a single valid area to the database', async () => {
@@ -69,12 +69,12 @@ describe('Areas Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(putAreaFn).toHaveBeenCalledTimes(1);
-            expect(putAreaFn).toHaveBeenCalledWith({
+            expect(createAreasFn).toHaveBeenCalledTimes(1);
+            expect(createAreasFn).toHaveBeenCalledWith([{
                 name: 'Faculty of Testing',
                 color: '#000',
                 uuid: expect.stringMatching(uuidRegex)
-            });
+            }]);
             expect(JSON.parse(result.body)).toEqual({
                 name: 'Faculty of Testing',
                 color: '#000',
@@ -95,17 +95,16 @@ describe('Areas Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(putAreaFn).toHaveBeenCalledTimes(2);
-            expect(putAreaFn).toHaveBeenCalledWith({
+            expect(createAreasFn).toHaveBeenCalledTimes(1);
+            expect(createAreasFn).toHaveBeenCalledWith([{
                 name: 'Faculty of Testing',
                 color: '#000',
                 uuid: expect.stringMatching(uuidRegex)
-            });
-            expect(putAreaFn).toHaveBeenCalledWith({
+            }, {
                 name: 'Faculty of Testing #2',
                 color: '#ccc',
                 uuid: expect.stringMatching(uuidRegex)
-            });
+            }]);
 
             expect(JSON.parse(result.body)).toEqual([{
                 name: 'Faculty of Testing',
@@ -128,7 +127,7 @@ describe('Areas Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('color');
-            expect(putAreaFn).not.toHaveBeenCalled();
+            expect(createAreasFn).not.toHaveBeenCalled();
         });
 
         test('rejects when a list of areas contains an invalid area', async () => {
@@ -144,11 +143,11 @@ describe('Areas Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('color');
-            expect(putAreaFn).not.toHaveBeenCalled();
+            expect(createAreasFn).not.toHaveBeenCalled();
         });
 
         test('responds with a message when a database error occurs', async () => {
-            putAreaFn.mockRejectedValueOnce(new Error('testError'));
+            createAreasFn.mockRejectedValueOnce(new Error('testError'));
             const result = await handler({
                 httpMethod: 'POST',
                 body: JSON.stringify({

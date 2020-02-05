@@ -78,14 +78,12 @@ async function createArea(dynamo, body) {
 
     const createdAreas = [];
     for (const area of validAreas) {
-        const newArea = {
+        createdAreas.push({
             uuid: UUIDv4(),
             ...area
-        };
-
-        await dynamo.putArea(newArea);
-        createdAreas.push(newArea);
+        });
     }
+    await dynamo.createAreas(createdAreas);
 
     return response(status.CREATED, Array.isArray(body) ? createdAreas : createdAreas[0]);
 }

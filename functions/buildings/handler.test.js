@@ -54,15 +54,15 @@ describe('Buildings Lambda', function () {
     });
 
     describe('POST Requests', () => {
-        const putBuildingFn = jest.fn().mockResolvedValue({});
+        const createBuildingsFn = jest.fn().mockResolvedValue({});
         const handler = buildings({
             dynamo: {
-                putBuilding: putBuildingFn
+                createBuildings: createBuildingsFn
             }
         });
 
         afterEach(() => {
-            putBuildingFn.mockClear();
+            createBuildingsFn.mockClear();
         });
 
         test('accepts & writes a single valid building to the database', async () => {
@@ -75,12 +75,12 @@ describe('Buildings Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(putBuildingFn).toHaveBeenCalledTimes(1);
-            expect(putBuildingFn).toHaveBeenCalledWith({
+            expect(createBuildingsFn).toHaveBeenCalledTimes(1);
+            expect(createBuildingsFn).toHaveBeenCalledWith([{
                 name: 'North Campus Building',
                 position: { lat: 35.111, lng: -12.222 },
                 uuid: expect.stringMatching(uuidRegex)
-            });
+            }]);
             expect(JSON.parse(result.body)).toEqual({
                 name: 'North Campus Building',
                 position: { lat: 35.111, lng: -12.222 },
@@ -101,17 +101,16 @@ describe('Buildings Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(putBuildingFn).toHaveBeenCalledTimes(2);
-            expect(putBuildingFn).toHaveBeenCalledWith({
+            expect(createBuildingsFn).toHaveBeenCalledTimes(1);
+            expect(createBuildingsFn).toHaveBeenCalledWith([{
                 name: 'North Campus Building',
                 position: { lat: 35.111, lng: -12.222 },
                 uuid: expect.stringMatching(uuidRegex)
-            });
-            expect(putBuildingFn).toHaveBeenCalledWith({
+            }, {
                 name: 'Middlesex College',
                 position: { lat: 32.111, lng: -10.222 },
                 uuid: expect.stringMatching(uuidRegex)
-            });
+            }]);
 
             expect(JSON.parse(result.body)).toEqual([{
                 name: 'North Campus Building',
@@ -135,7 +134,7 @@ describe('Buildings Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('position.lng');
-            expect(putBuildingFn).not.toHaveBeenCalled();
+            expect(createBuildingsFn).not.toHaveBeenCalled();
         });
 
         test('rejects when a list of buildings contains an invalid building', async () => {
@@ -151,11 +150,11 @@ describe('Buildings Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('name');
-            expect(putBuildingFn).not.toHaveBeenCalled();
+            expect(createBuildingsFn).not.toHaveBeenCalled();
         });
 
         test('responds with a message when a database error occurs', async () => {
-            putBuildingFn.mockRejectedValueOnce(new Error('testError'));
+            createBuildingsFn.mockRejectedValueOnce(new Error('testError'));
             const result = await handler({
                 httpMethod: 'POST',
                 body: JSON.stringify({

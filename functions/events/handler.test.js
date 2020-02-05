@@ -31,14 +31,22 @@ describe('Events Lambda', function () {
                     startTime: '05:00',
                     endTime: '06:00',
                     uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }, {
+                    name: 'Faculty Presentation',
+                    description: 'Schooly stuff',
+                    area: 'bb38fbfe-444c-4d9a-8a6a-a675ff110ded',
+                    building: '1564889b-125d-4ec2-b571-8dbb648cfdfe',
+                    openHouse: '71c554c5-7ae3-4711-8c81-4370a536691e',
+                    room: '300',
+                    startTime: '010:00',
+                    endTime: '11:00',
+                    uuid: '0354a6ec-5577-4ef2-982e-5b0d0dff78b9'
                 }]
             });
-            getEventAttendeesFn.mockResolvedValueOnce(({
-                Item: {
-                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a',
-                    attendees: 4
-                }
-            }));
+            getEventAttendeesFn.mockResolvedValueOnce([
+                { uuid: '0354a6ec-5577-4ef2-982e-5b0d0dff78b9', attendees: 2 },
+                { uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a', attendees: 4 }
+            ]);
 
             const result = await handler({
                 httpMethod: 'GET'
@@ -56,7 +64,67 @@ describe('Events Lambda', function () {
                 endTime: '06:00',
                 attendees: 4,
                 uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+            }, {
+                name: 'Faculty Presentation',
+                description: 'Schooly stuff',
+                area: 'bb38fbfe-444c-4d9a-8a6a-a675ff110ded',
+                building: '1564889b-125d-4ec2-b571-8dbb648cfdfe',
+                openHouse: '71c554c5-7ae3-4711-8c81-4370a536691e',
+                room: '300',
+                startTime: '010:00',
+                endTime: '11:00',
+                attendees: 2,
+                uuid: '0354a6ec-5577-4ef2-982e-5b0d0dff78b9'
             }]);
+            expect(getEventAttendeesFn).toHaveBeenCalledWith([
+                'ccfb14f5-41a7-4514-9aac-28440981c21a', '0354a6ec-5577-4ef2-982e-5b0d0dff78b9'
+            ]);
+        });
+
+        test('handles an empty database', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(JSON.parse(result.body)).toEqual([]);
+            expect(getEventAttendeesFn).not.toHaveBeenCalled();
+        });
+
+        test('handles a missing attendee count', async () => {
+            scanEventsFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                    building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '2300',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }]
+            });
+            getEventAttendeesFn.mockResolvedValueOnce([]);
+
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(JSON.parse(result.body)).toEqual([{
+                name: 'Science Presentation',
+                description: 'Sciency stuff',
+                area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                room: '2300',
+                startTime: '05:00',
+                endTime: '06:00',
+                uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+            }]);
+            expect(getEventAttendeesFn).toHaveBeenCalledWith(['ccfb14f5-41a7-4514-9aac-28440981c21a']);
         });
 
         test('responds with a message when a database error occurs', async () => {
@@ -71,15 +139,15 @@ describe('Events Lambda', function () {
     });
 
     describe('POST Requests', () => {
-        const putEventFn = jest.fn().mockResolvedValue({});
-        const putEventAttendeesFn = jest.fn().mockResolvedValue({});
+        const createEventsFn = jest.fn().mockResolvedValue({});
+        const createEventAttendeesFn = jest.fn().mockResolvedValue({});
         const buildingExistsFn = jest.fn();
         const areaExistsFn = jest.fn();
         const openHouseExistsFn = jest.fn();
         const handler = events({
             dynamo: {
-                putEvent: putEventFn,
-                putEventAttendees: putEventAttendeesFn,
+                createEvents: createEventsFn,
+                createEventAttendees: createEventAttendeesFn,
                 buildingExists: buildingExistsFn,
                 areaExists: areaExistsFn,
                 openHouseExists: openHouseExistsFn
@@ -87,8 +155,8 @@ describe('Events Lambda', function () {
         });
 
         afterEach(() => {
-            putEventFn.mockClear();
-            putEventAttendeesFn.mockClear();
+            createEventsFn.mockClear();
+            createEventAttendeesFn.mockClear();
             buildingExistsFn.mockReset();
             areaExistsFn.mockReset();
             openHouseExistsFn.mockReset();
@@ -117,8 +185,8 @@ describe('Events Lambda', function () {
             expect(openHouseExistsFn).toHaveBeenCalledWith('e3a8d98f-775a-46da-b977-f2fe1fa6f360');
             expect(areaExistsFn).toHaveBeenCalledWith('e1b0e6d0-b3b2-42bf-8d4c-9801f374989e');
             expect(buildingExistsFn).toHaveBeenCalledWith('89bb0745-b18d-4b8e-913c-4c768012c14d');
-            expect(putEventFn).toHaveBeenCalledTimes(1);
-            expect(putEventFn).toHaveBeenCalledWith({
+            expect(createEventsFn).toHaveBeenCalledTimes(1);
+            expect(createEventsFn).toHaveBeenCalledWith([{
                 name: 'Science Presentation',
                 description: 'Sciency stuff',
                 area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
@@ -128,12 +196,12 @@ describe('Events Lambda', function () {
                 startTime: '05:00',
                 endTime: '06:00',
                 uuid: expect.stringMatching(uuidRegex)
-            });
-            expect(putEventAttendeesFn).toHaveBeenCalledTimes(1);
-            expect(putEventAttendeesFn).toHaveBeenCalledWith({
+            }]);
+            expect(createEventAttendeesFn).toHaveBeenCalledTimes(1);
+            expect(createEventAttendeesFn).toHaveBeenCalledWith([{
                 attendees: 0,
                 uuid: expect.stringMatching(uuidRegex)
-            });
+            }]);
             expect(JSON.parse(result.body)).toEqual({
                 name: 'Science Presentation',
                 description: 'Sciency stuff',
@@ -177,8 +245,8 @@ describe('Events Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(putEventFn).toHaveBeenCalledTimes(2);
-            expect(putEventFn).toHaveBeenCalledWith({
+            expect(createEventsFn).toHaveBeenCalledTimes(1);
+            expect(createEventsFn).toHaveBeenCalledWith([{
                 name: 'Science Presentation',
                 description: 'Sciency stuff',
                 area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
@@ -188,8 +256,7 @@ describe('Events Lambda', function () {
                 startTime: '05:00',
                 endTime: '06:00',
                 uuid: expect.stringMatching(uuidRegex)
-            });
-            expect(putEventFn).toHaveBeenCalledWith({
+            }, {
                 name: 'Engineering Presentation',
                 description: 'Engineery stuff',
                 area: 'ca794597-0400-474f-a7f3-aaace942a418',
@@ -199,12 +266,15 @@ describe('Events Lambda', function () {
                 startTime: '06:00',
                 endTime: '07:00',
                 uuid: expect.stringMatching(uuidRegex)
-            });
-            expect(putEventAttendeesFn).toHaveBeenCalledTimes(2);
-            expect(putEventAttendeesFn).toHaveBeenCalledWith({
+            }]);
+            expect(createEventAttendeesFn).toHaveBeenCalledTimes(1);
+            expect(createEventAttendeesFn).toHaveBeenCalledWith([{
                 attendees: 0,
                 uuid: expect.stringMatching(uuidRegex)
-            });
+            }, {
+                attendees: 0,
+                uuid: expect.stringMatching(uuidRegex)
+            }]);
 
             expect(JSON.parse(result.body)).toEqual([{
                 name: 'Science Presentation',
@@ -251,8 +321,8 @@ describe('Events Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('area');
-            expect(putEventFn).not.toHaveBeenCalled();
-            expect(putEventAttendeesFn).not.toHaveBeenCalled();
+            expect(createEventsFn).not.toHaveBeenCalled();
+            expect(createEventAttendeesFn).not.toHaveBeenCalled();
         });
 
         test('rejects when a list of events contains an invalid event', async () => {
@@ -284,8 +354,8 @@ describe('Events Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('openHouse');
-            expect(putEventFn).not.toHaveBeenCalled();
-            expect(putEventAttendeesFn).not.toHaveBeenCalled();
+            expect(createEventsFn).not.toHaveBeenCalled();
+            expect(createEventAttendeesFn).not.toHaveBeenCalled();
         });
 
         test('rejects when an event has a non-existent open house', async () => {
@@ -309,8 +379,8 @@ describe('Events Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('open house');
-            expect(putEventFn).not.toHaveBeenCalled();
-            expect(putEventAttendeesFn).not.toHaveBeenCalled();
+            expect(createEventsFn).not.toHaveBeenCalled();
+            expect(createEventAttendeesFn).not.toHaveBeenCalled();
         });
 
         test('rejects when an event has a non-existent area', async () => {
@@ -334,8 +404,8 @@ describe('Events Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('area');
-            expect(putEventFn).not.toHaveBeenCalled();
-            expect(putEventAttendeesFn).not.toHaveBeenCalled();
+            expect(createEventsFn).not.toHaveBeenCalled();
+            expect(createEventAttendeesFn).not.toHaveBeenCalled();
         });
 
         test('rejects when an event has a non-existent building', async () => {
@@ -359,8 +429,8 @@ describe('Events Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('building');
-            expect(putEventFn).not.toHaveBeenCalled();
-            expect(putEventAttendeesFn).not.toHaveBeenCalled();
+            expect(createEventsFn).not.toHaveBeenCalled();
+            expect(createEventAttendeesFn).not.toHaveBeenCalled();
         });
 
         test('responds with a message when a database error occurs', async () => {

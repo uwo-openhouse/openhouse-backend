@@ -54,13 +54,26 @@ module.exports = (deps) => async (event) => {
 };
 
 async function getEvents(dynamo) {
-    const data = await dynamo.scanEvents();
+    const events = (await dynamo.scanEvents()).Items;
 
-    for (const event of data.Items) {
-        event.attendees = (await dynamo.getEventAttendees(event.uuid)).Item.attendees;
+    if (events.length > 0) {
+        const eventAttendees = await dynamo.getEventAttendees(events.map((event) => event.uuid));
+
+        // Change array of eventAttendees objects to uuid => count map
+        const attendeesMap = eventAttendees.reduce((map, eventAttendee) => {
+            map[eventAttendee.uuid] = eventAttendee.attendees;
+            return map;
+        }, {});
+
+        for (const event of events) {
+            const attendees = attendeesMap[event.uuid];
+            if (attendees != null) {
+                event.attendees = attendees;
+            }
+        }
     }
 
-    return response(status.OK, data.Items);
+    return response(status.OK, events);
 }
 
 async function createEvent(dynamo, body) {
@@ -90,28 +103,29 @@ async function createEvent(dynamo, body) {
     }
 
     const createdEvents = [];
+    const createdEventAttendees = [];
+    const resultEvents = [];
     for (const event of validEvents) {
         const uuid = UUIDv4();
 
-        const newEvent = {
+        createdEvents.push({
             uuid,
-            ...event
-        };
-        const newAttendees = {
+            ...event,
+        });
+        createdEventAttendees.push({
             uuid,
             attendees: 0
-        };
-
-        await dynamo.putEvent(newEvent);
-        await dynamo.putEventAttendees(newAttendees);
-
-        createdEvents.push({
-            ...newEvent,
-            ...newAttendees
+        });
+        resultEvents.push({
+            uuid,
+            attendees: 0,
+            ...event
         });
     }
+    await dynamo.createEvents(createdEvents);
+    await dynamo.createEventAttendees(createdEventAttendees);
 
-    return response(status.CREATED, Array.isArray(body) ? createdEvents : createdEvents[0]);
+    return response(status.CREATED, Array.isArray(body) ? resultEvents : resultEvents[0]);
 }
 
 async function updateEvent(dynamo, uuid, body) {

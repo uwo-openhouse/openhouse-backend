@@ -22,6 +22,15 @@ if (ENDPOINT_OVERRIDE) {
 module.exports.handler = require('./handler.js')({
     dynamo: {
         scanEateries: () => ddb.scan({ TableName: EATERIES_TABLE }).promise(),
+        createEateries: (eateries) => ddb.batchWrite({
+            RequestItems: {
+                [EATERIES_TABLE]: eateries.map((eatery) => ({
+                    PutRequest: {
+                        Item: eatery
+                    }
+                }))
+            }
+        }).promise(),
         putEatery: (item) => ddb.put({ TableName: EATERIES_TABLE, Item: item }).promise(),
         getEatery: (uuid) => ddb.get({ TableName: EATERIES_TABLE, Key: { uuid }}).promise(),
         deleteEatery: (uuid) => ddb.delete({ TableName: EATERIES_TABLE, Key: { uuid }}).promise(),

@@ -50,13 +50,26 @@ module.exports = (deps) => async (event) => {
 };
 
 async function getOpenHouses(dynamo) {
-    const data = await dynamo.scanOpenHouses();
+    const openHouses = (await dynamo.scanOpenHouses()).Items;
 
-    for (const openHouse of data.Items) {
-        openHouse.attendees = (await dynamo.getOpenHouseAttendees(openHouse.uuid)).Item.attendees;
+    if (openHouses.length > 0) {
+        const openHouseAttendees = await dynamo.getOpenHouseAttendees(openHouses.map((event) => event.uuid));
+
+        // Change array of openHouseAttendees objects to uuid => count map
+        const attendeesMap = openHouseAttendees.reduce((map, openHouseAttendee) => {
+            map[openHouseAttendee.uuid] = openHouseAttendee.attendees;
+            return map;
+        }, {});
+
+        for (const openHouse of openHouses) {
+            const attendees = attendeesMap[openHouse.uuid];
+            if (attendees != null) {
+                openHouse.attendees = attendees;
+            }
+        }
     }
 
-    return response(status.OK, data.Items);
+    return response(status.OK, openHouses);
 }
 
 async function createOpenHouse(dynamo, body) {
@@ -82,28 +95,30 @@ async function createOpenHouse(dynamo, body) {
     }
 
     const createdOpenHouses = [];
+    const createdOpenHouseAttendees = [];
+    const resultOpenHouses = [];
     for (const openHouse of validOpenHouses) {
         const uuid = UUIDv4();
 
-        const newOpenHouse = {
+        createdOpenHouses.push({
             uuid,
             ...openHouse
-        };
-        const newAttendees = {
+        });
+        createdOpenHouseAttendees.push({
             uuid,
             attendees: 0
-        };
-
-        await dynamo.putOpenHouse(newOpenHouse);
-        await dynamo.putOpenHouseAttendees(newAttendees);
-
-        createdOpenHouses.push({
-            ...newOpenHouse,
-            ...newAttendees
+        });
+        resultOpenHouses.push({
+            uuid,
+            attendees: 0,
+            ...openHouse
         });
     }
 
-    return response(status.CREATED, Array.isArray(body) ? createdOpenHouses : createdOpenHouses[0]);
+    await dynamo.createOpenHouses(createdOpenHouses);
+    await dynamo.createOpenHouseAttendees(createdOpenHouseAttendees);
+
+    return response(status.CREATED, Array.isArray(body) ? resultOpenHouses : resultOpenHouses[0]);
 }
 
 async function updateOpenHouse(dynamo, uuid, body) {
