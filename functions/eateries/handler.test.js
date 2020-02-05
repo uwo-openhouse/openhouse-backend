@@ -26,7 +26,6 @@ describe('Eateries Lambda', function () {
                     building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
                 }]
             });
-
             const result = await handler({
                 httpMethod: 'GET'
             });
@@ -40,20 +39,30 @@ describe('Eateries Lambda', function () {
                 building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
             }]);
         });
+
+        test('responds with a message when a database error occurs', async () => {
+            scanEateriesFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('POST Requests', () => {
-        const putEateryFn = jest.fn().mockResolvedValue({});
+        const createEateriesFn = jest.fn().mockResolvedValue({});
         const buildingExistsFn = jest.fn();
         const handler = eateries({
             dynamo: {
-                putEatery: putEateryFn,
+                createEateries: createEateriesFn,
                 buildingExists: buildingExistsFn
             }
         });
 
         afterEach(() => {
-            putEateryFn.mockClear();
+            createEateriesFn.mockClear();
             buildingExistsFn.mockReset();
         });
 
@@ -70,14 +79,14 @@ describe('Eateries Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(putEateryFn).toHaveBeenCalledTimes(1);
-            expect(putEateryFn).toHaveBeenCalledWith({
+            expect(createEateriesFn).toHaveBeenCalledTimes(1);
+            expect(createEateriesFn).toHaveBeenCalledWith([{
                 name: 'The Grad Club',
                 openTime: '10:00',
                 closeTime: '22:00',
                 building: '0b16d09b-bd73-4849-83f7-b3bcec909e20',
                 uuid: expect.stringMatching(uuidRegex)
-            });
+            }]);
             expect(buildingExistsFn).toHaveBeenCalledWith('0b16d09b-bd73-4849-83f7-b3bcec909e20');
             expect(JSON.parse(result.body)).toEqual({
                 name: 'The Grad Club',
@@ -106,21 +115,20 @@ describe('Eateries Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.CREATED);
-            expect(putEateryFn).toHaveBeenCalledTimes(2);
-            expect(putEateryFn).toHaveBeenCalledWith({
+            expect(createEateriesFn).toHaveBeenCalledTimes(1);
+            expect(createEateriesFn).toHaveBeenCalledWith([{
                 name: 'The Grad Club',
                 openTime: '10:00',
                 closeTime: '22:00',
                 building: '0b16d09b-bd73-4849-83f7-b3bcec909e20',
                 uuid: expect.stringMatching(uuidRegex)
-            });
-            expect(putEateryFn).toHaveBeenCalledWith({
+            }, {
                 name: 'Tim Hortons',
                 openTime: '8:00',
                 closeTime: '17:00',
                 building: 'f16ab4ca-71f8-43bb-8762-62d9cffe3cc8',
                 uuid: expect.stringMatching(uuidRegex)
-            });
+            }]);
 
             expect(JSON.parse(result.body)).toEqual([{
                 name: 'The Grad Club',
@@ -150,7 +158,7 @@ describe('Eateries Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('openTime');
-            expect(putEateryFn).not.toHaveBeenCalled();
+            expect(createEateriesFn).not.toHaveBeenCalled();
         });
 
         test('rejects when a list of eateries contains an invalid eatery', async () => {
@@ -171,7 +179,7 @@ describe('Eateries Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('name');
-            expect(putEateryFn).not.toHaveBeenCalled();
+            expect(createEateriesFn).not.toHaveBeenCalled();
         });
 
         test('rejects when an eatery has a non-existent building', async () => {
@@ -188,7 +196,23 @@ describe('Eateries Lambda', function () {
 
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toMatch('building');
-            expect(putEateryFn).not.toHaveBeenCalled();
+            expect(createEateriesFn).not.toHaveBeenCalled();
+        });
+
+        test('responds with a message when a database error occurs', async () => {
+            buildingExistsFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'The Grad Club',
+                    openTime: '10:00',
+                    closeTime: '22:00',
+                    building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
+                })
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     });
 
@@ -318,6 +342,25 @@ describe('Eateries Lambda', function () {
             expect(JSON.parse(result.body).error).toMatch('building');
             expect(putEateryFn).not.toHaveBeenCalled();
         });
+
+        test('responds with an error when a database error occurs', async () => {
+            getEateryFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'The Grad Club',
+                    openTime: '10:00',
+                    closeTime: '22:00',
+                    building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
+                }),
+                pathParameters: {
+                    uuid: 'c24e551e-c914-4198-b3fc-d1d040f53a0f'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
+        });
     });
 
     describe('DELETE Requests', () => {
@@ -353,6 +396,19 @@ describe('Eateries Lambda', function () {
             expect(result.statusCode).toEqual(status.BAD_REQUEST);
             expect(JSON.parse(result.body).error).toEqual('Missing UUID in URL path');
             expect(deleteEateryFn).not.toHaveBeenCalled();
+        });
+
+        test('responds with an error when a database error occurs', async () => {
+            deleteEateryFn.mockRejectedValueOnce(new Error('testError'));
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'c24e551e-c914-4198-b3fc-d1d040f53a0f'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.INTERNAL_SERVER_ERROR);
+            expect(JSON.parse(result.body)).toEqual({ error: 'testError' });
         });
     })
 });

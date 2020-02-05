@@ -26,6 +26,8 @@ module.exports = (deps) => async (event) => {
         return response(status.OK);
     } catch (err) {
         console.error(err);
-        return err;
+        return response(status.INTERNAL_SERVER_ERROR, {
+            error: err.message
+        });
     }
 };

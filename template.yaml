@@ -28,7 +28,7 @@ Globals:
             Header: Authorization
 
   Function:
-    Timeout: 3
+    Timeout: 10
     Runtime: nodejs12.x
     Environment:
       Variables:
