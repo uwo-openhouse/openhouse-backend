@@ -30,7 +30,8 @@
     "OpenHousesFunction": {
         "ENDPOINT_OVERRIDE": "http://127.0.0.1:8000",
         "OPEN_HOUSES_TABLE": "OpenHouse-OpenHouses",
-        "OPEN_HOUSE_ATTENDEES_TABLE": "OpenHouse-OpenHouseAttendees"
+        "OPEN_HOUSE_ATTENDEES_TABLE": "OpenHouse-OpenHouseAttendees",
+        "EVENTS_TABLE": "OpenHouse-Events"
     },
     "OpenHouseAttendeesFunction": {
         "ENDPOINT_OVERRIDE": "http://127.0.0.1:8000",

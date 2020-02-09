@@ -92,11 +92,14 @@ Resources:
         Variables:
           OPEN_HOUSES_TABLE: !Ref OpenHousesTable
           OPEN_HOUSE_ATTENDEES_TABLE: !Ref OpenHouseAttendeesTable
+          EVENTS_TABLE: !Ref EventsTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref OpenHousesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref OpenHouseAttendeesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventsTable
       Events:
         Gateway:
           Type: Api
@@ -111,6 +114,7 @@ Resources:
     DependsOn:
       - OpenHousesTable
       - OpenHouseAttendeesTable
+      - EventsTable
 
   OpenHouseAttendeesFunction:
     Type: AWS::Serverless::Function
