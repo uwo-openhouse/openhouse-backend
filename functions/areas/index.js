@@ -1,5 +1,6 @@
 const {
-    TABLE_NAME,
+    AREAS_TABLE,
+    EVENTS_TABLE,
     ENDPOINT_OVERRIDE
 } = process.env;
 
@@ -20,18 +21,29 @@ if (ENDPOINT_OVERRIDE) {
 // Use dependency injection to allow for easier unit testing
 module.exports.handler = require('./handler.js')({
     dynamo: {
-        scanAreas: () => ddb.scan({ TableName: TABLE_NAME }).promise(),
+        scanAreas: () => ddb.scan({ TableName: AREAS_TABLE }).promise(),
         createAreas: (areas) => ddb.batchWrite({
             RequestItems: {
-                [TABLE_NAME]: areas.map((area) => ({
+                [AREAS_TABLE]: areas.map((area) => ({
                     PutRequest: {
                         Item: area
                     }
                 }))
             }
         }).promise(),
-        putArea: (item) => ddb.put({ TableName: TABLE_NAME, Item: item }).promise(),
-        getArea: (uuid) => ddb.get({ TableName: TABLE_NAME, Key: { uuid }}).promise(),
-        deleteArea: (uuid) => ddb.delete({ TableName: TABLE_NAME, Key: { uuid }}).promise()
+        putArea: (item) => ddb.put({ TableName: AREAS_TABLE, Item: item }).promise(),
+        getArea: (uuid) => ddb.get({ TableName: AREAS_TABLE, Key: { uuid }}).promise(),
+        deleteArea: (uuid) => ddb.delete({ TableName: AREAS_TABLE, Key: { uuid }}).promise(),
+
+        scanEvents: () => ddb.scan({ TableName: EVENTS_TABLE }).promise(),
+        deleteEvents: (uuids) => ddb.batchWrite({
+            RequestItems: {
+                [EVENTS_TABLE]: uuids.map((uuid) => ({
+                    DeleteRequest: {
+                        Key: { uuid }
+                    }
+                }))
+            }
+        }).promise(),
     }
 });

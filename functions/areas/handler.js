@@ -108,6 +108,18 @@ async function updateArea(dynamo, uuid, body) {
 }
 
 async function deleteArea(dynamo, uuid) {
+    const events = (await dynamo.scanEvents()).Items;
+    const eventUUIDsToDelete = [];
+    for (const event of events) {
+        if (event.area === uuid) {
+            eventUUIDsToDelete.push(event.uuid);
+        }
+    }
+
+    if (eventUUIDsToDelete.length > 0) {
+        await dynamo.deleteEvents(eventUUIDsToDelete);
+    }
+
     await dynamo.deleteArea(uuid);
 
     return response(status.OK);

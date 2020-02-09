@@ -1,7 +1,8 @@
 {
     "AreasFunction": {
         "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",
-        "TABLE_NAME": "OpenHouse-Areas"
+        "AREAS_TABLE": "OpenHouse-Areas",
+        "EVENTS_TABLE": "OpenHouse-Events"
     },
     "BuildingsFunction": {
         "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",
