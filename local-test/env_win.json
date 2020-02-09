@@ -6,7 +6,9 @@
     },
     "BuildingsFunction": {
         "ENDPOINT_OVERRIDE": "http://docker.for.windows.localhost:8000",
-        "TABLE_NAME": "OpenHouse-Buildings"
+        "BUILDINGS_TABLE": "OpenHouse-Buildings",
+        "EATERIES_TABLE": "OpenHouse-Eateries",
+        "EVENTS_TABLE": "OpenHouse-Events"
     },
     "EateriesFunction": {
         "ENDPOINT_OVERRIDE": "http://docker.for.windows.localhost:8000",
