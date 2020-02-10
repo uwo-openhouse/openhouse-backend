@@ -10,6 +10,9 @@ Parameters:
     Type: String
 #  AdminUIDomainName:
 #    Type: String
+#  AdminUICertificateARN:
+#    Type: String
+#    NoEcho: true
 
 Globals:
   Api:
@@ -45,14 +48,7 @@ Resources:
               CanonicalUser: !GetAtt AdminUIOriginAccessIdentity.S3CanonicalUserId
             Resource: !Sub "${AdminUIBucket.Arn}/*"
 
-  # Admin UI Certificate & CloudFront Resources
-
-#  # NOTICE: This resource will remain in CREATE_IN_PROGRESS state until domain is validated (see stack output on run)
-#  AdminUICertificate:
-#    Type: AWS::CertificateManager::Certificate
-#    Properties:
-#      DomainName: !Ref AdminUIDomainName
-#      ValidationMethod: DNS
+  # Admin UI CloudFront Resources
 
   # Set policy to only allow access through CloudFront (HTTPS)
   AdminUIOriginAccessIdentity:
@@ -81,7 +77,7 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
         ViewerCertificate:
           CloudFrontDefaultCertificate: true # Remove after updating w/ proper domain/cert
-#          AcmCertificateArn: !Ref AdminUICertificate
+#          AcmCertificateArn: !Ref AdminUICertificateARN
 #          MinimumProtocolVersion: TLSv1.2_2018
 #          SslSupportMethod: sni-only
 
