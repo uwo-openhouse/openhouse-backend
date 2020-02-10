@@ -5,6 +5,12 @@ Description: >
 
   Backend SAM & Infrastructure
 
+Parameters:
+  AdminUIBucketName:
+    Type: String
+#  AdminUIDomainName:
+#    Type: String
+
 Globals:
   Api:
     Cors:
@@ -19,6 +25,66 @@ Globals:
         ENDPOINT_OVERRIDE: ""
 
 Resources:
+  # Admin UI Frontend Bucket Resources
+
+  AdminUIBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref AdminUIBucketName
+
+  AdminUIBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AdminUIBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: "s3:GetObject"
+            Effect: "Allow"
+            Principal:
+              CanonicalUser: !GetAtt AdminUIOriginAccessIdentity.S3CanonicalUserId
+            Resource: !Sub "${AdminUIBucket.Arn}/*"
+
+  # Admin UI Certificate & CloudFront Resources
+
+#  # NOTICE: This resource will remain in CREATE_IN_PROGRESS state until domain is validated (see stack output on run)
+#  AdminUICertificate:
+#    Type: AWS::CertificateManager::Certificate
+#    Properties:
+#      DomainName: !Ref AdminUIDomainName
+#      ValidationMethod: DNS
+
+  # Set policy to only allow access through CloudFront (HTTPS)
+  AdminUIOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Join [ "", [ "access-identity-", !GetAtt AdminUIBucket.DomainName ] ]
+
+  AdminUICloudFrontDisturbution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+#        Aliases:
+#          - !Ref AdminUIDomainName
+        Origins:
+          - DomainName: !GetAtt AdminUIBucket.DomainName
+            Id: S3-AdminUI-site
+            S3OriginConfig:
+              OriginAccessIdentity: !Join [ "", [ "origin-access-identity/cloudfront/", !Ref AdminUIOriginAccessIdentity ] ]
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          ForwardedValues:
+            QueryString: true
+          TargetOriginId: S3-AdminUI-site
+          ViewerProtocolPolicy: redirect-to-https
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true # Remove after updating w/ proper domain/cert
+#          AcmCertificateArn: !Ref AdminUICertificate
+#          MinimumProtocolVersion: TLSv1.2_2018
+#          SslSupportMethod: sni-only
+
   # Lambda Functions & API Events
 
   BuildingsFunction:
