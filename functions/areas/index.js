@@ -1,11 +1,12 @@
 const {
+    AWS_REGION,
     AREAS_TABLE,
     EVENTS_TABLE,
     ENDPOINT_OVERRIDE
 } = process.env;
 
 const aws = require('aws-sdk');
-aws.config.update({ region: 'us-east-2' });
+aws.config.update({ region: AWS_REGION });
 
 let ddb;
 if (ENDPOINT_OVERRIDE) {
