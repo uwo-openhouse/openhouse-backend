@@ -51,7 +51,7 @@ Resources:
             Effect: "Allow"
             Principal:
               CanonicalUser: !GetAtt AdminUIOriginAccessIdentity.S3CanonicalUserId
-            Resource: AdminUIBucket.Arn
+            Resource: !GetAtt AdminUIBucket.Arn
 
   # Admin UI CloudFront Resources
 
