@@ -1,4 +1,5 @@
 const {
+    AWS_REGION,
     OPEN_HOUSES_TABLE,
     OPEN_HOUSE_ATTENDEES_TABLE,
     EVENTS_TABLE,
@@ -6,7 +7,7 @@ const {
 } = process.env;
 
 const aws = require('aws-sdk');
-aws.config.update({ region: 'us-east-2' });
+aws.config.update({ region: AWS_REGION });
 
 let ddb;
 if (ENDPOINT_OVERRIDE) {
