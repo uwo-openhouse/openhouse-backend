@@ -42,13 +42,16 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Action:
-              - "s3:GetObject"
-              - "s3:ListBucket"
+          - Action: "s3:GetObject"
             Effect: "Allow"
             Principal:
               CanonicalUser: !GetAtt AdminUIOriginAccessIdentity.S3CanonicalUserId
             Resource: !Sub "${AdminUIBucket.Arn}/*"
+          - Action: "s3:ListBucket"
+            Effect: "Allow"
+            Principal:
+              CanonicalUser: !GetAtt AdminUIOriginAccessIdentity.S3CanonicalUserId
+            Resource: AdminUIBucket.Arn
 
   # Admin UI CloudFront Resources
 
