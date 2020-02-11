@@ -75,6 +75,10 @@ Resources:
             QueryString: true
           TargetOriginId: S3-AdminUI-site
           ViewerProtocolPolicy: redirect-to-https
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
         ViewerCertificate:
           CloudFrontDefaultCertificate: true # Remove after updating w/ proper domain/cert
 #          AcmCertificateArn: !Ref AdminUICertificateARN
@@ -382,5 +386,8 @@ Resources:
 
 Outputs:
   ApiEndpoint:
-    Description: "API Gateway endpoint URL for Prod stage"
+    Description: "Backend API Gateway endpoint URL"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  AdminUICloudFrontEndpoint:
+    Description: "Admin UI CloudFront Distribution URL"
+    Value: !GetAtt AdminUICloudFrontDisturbution.DomainName
