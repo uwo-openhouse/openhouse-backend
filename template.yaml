@@ -386,5 +386,8 @@ Resources:
 
 Outputs:
   ApiEndpoint:
-    Description: "API Gateway endpoint URL for Prod stage"
+    Description: "Backend API Gateway endpoint URL"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  AdminUICloudFrontEndpoint:
+    Description: "Admin UI CloudFront Distribution URL"
+    Value: !GetAtt AdminUICloudFrontDisturbution.DomainName
