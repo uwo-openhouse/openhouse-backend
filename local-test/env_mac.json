@@ -1,11 +1,14 @@
 {
     "AreasFunction": {
         "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",
-        "TABLE_NAME": "OpenHouse-Areas"
+        "AREAS_TABLE": "OpenHouse-Areas",
+        "EVENTS_TABLE": "OpenHouse-Events"
     },
     "BuildingsFunction": {
         "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",
-        "TABLE_NAME": "OpenHouse-Buildings"
+        "BUILDINGS_TABLE": "OpenHouse-Buildings",
+        "EATERIES_TABLE": "OpenHouse-Eateries",
+        "EVENTS_TABLE": "OpenHouse-Events"
     },
     "EateriesFunction": {
         "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",
@@ -27,7 +30,8 @@
     "OpenHousesFunction": {
         "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",
         "OPEN_HOUSES_TABLE": "OpenHouse-OpenHouses",
-        "OPEN_HOUSE_ATTENDEES_TABLE": "OpenHouse-OpenHouseAttendees"
+        "OPEN_HOUSE_ATTENDEES_TABLE": "OpenHouse-OpenHouseAttendees",
+        "EVENTS_TABLE": "OpenHouse-Events"
     },
     "OpenHouseAttendeesFunction": {
         "ENDPOINT_OVERRIDE": "http://docker.for.mac.localhost:8000",

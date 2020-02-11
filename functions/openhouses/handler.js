@@ -141,6 +141,18 @@ async function updateOpenHouse(dynamo, uuid, body) {
 }
 
 async function deleteOpenHouse(dynamo, uuid) {
+    const events = (await dynamo.scanEvents()).Items;
+    const eventUUIDsToDelete = [];
+    for (const event of events) {
+        if (event.openHouse === uuid) {
+            eventUUIDsToDelete.push(event.uuid);
+        }
+    }
+
+    if (eventUUIDsToDelete.length > 0) {
+        await dynamo.deleteEvents(eventUUIDsToDelete);
+    }
+
     await dynamo.deleteOpenHouse(uuid);
     await dynamo.deleteOpenHouseAttendees(uuid);
 

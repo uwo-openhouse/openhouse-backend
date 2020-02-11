@@ -398,19 +398,26 @@ describe('Open Houses Lambda', function () {
     describe('DELETE Requests', () => {
         const deleteOpenHouseFn = jest.fn().mockResolvedValue({});
         const deleteOpenHouseAttendeesFn = jest.fn().mockResolvedValue({});
+        const scanEventsFn = jest.fn();
+        const deleteEventsFn = jest.fn().mockResolvedValue({});
         const handler = openHouses({
             dynamo: {
                 deleteOpenHouse: deleteOpenHouseFn,
-                deleteOpenHouseAttendees: deleteOpenHouseAttendeesFn
+                deleteOpenHouseAttendees: deleteOpenHouseAttendeesFn,
+                scanEvents: scanEventsFn,
+                deleteEvents: deleteEventsFn
             }
         });
 
         afterEach(() => {
             deleteOpenHouseFn.mockClear();
             deleteOpenHouseAttendeesFn.mockClear();
+            scanEventsFn.mockReset();
+            deleteEventsFn.mockClear();
         });
 
         test('accepts & deletes an open house from the database', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
             const result = await handler({
                 httpMethod: 'DELETE',
                 pathParameters: {
@@ -419,13 +426,40 @@ describe('Open Houses Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.OK);
+            expect(deleteEventsFn).not.toHaveBeenCalled();
             expect(deleteOpenHouseFn).toHaveBeenCalledTimes(1);
             expect(deleteOpenHouseFn).toHaveBeenCalledWith('db028071-7e1d-4d6b-8999-d3111b558f8d');
             expect(deleteOpenHouseAttendeesFn).toHaveBeenCalledTimes(1);
             expect(deleteOpenHouseAttendeesFn).toHaveBeenCalledWith('db028071-7e1d-4d6b-8999-d3111b558f8d');
         });
 
+        test('deletes events containing the buildings\'s UUID', async () => {
+            scanEventsFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: '95675864-c6e1-4761-a4bf-af9746b045b8',
+                    building: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00',
+                    openHouse: 'db028071-7e1d-4d6b-8999-d3111b558f8d',
+                    room: '2300',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }]
+            });
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(deleteEventsFn).toHaveBeenCalledWith(['ccfb14f5-41a7-4514-9aac-28440981c21a']);
+        });
+
         test('rejects when the open house UUID is missing', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
             const result = await handler({
                 httpMethod: 'DELETE'
             });
@@ -437,6 +471,7 @@ describe('Open Houses Lambda', function () {
         });
 
         test('responds with an error when a database error occurs', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
             deleteOpenHouseFn.mockRejectedValueOnce(new Error('testError'));
             const result = await handler({
                 httpMethod: 'DELETE',

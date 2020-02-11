@@ -1,10 +1,13 @@
 const {
-    TABLE_NAME,
+    AWS_REGION,
+    BUILDINGS_TABLE,
+    EVENTS_TABLE,
+    EATERIES_TABLE,
     ENDPOINT_OVERRIDE
 } = process.env;
 
 const aws = require('aws-sdk');
-aws.config.update({ region: 'us-east-2' });
+aws.config.update({ region: AWS_REGION });
 
 let ddb;
 if (ENDPOINT_OVERRIDE) {
@@ -20,18 +23,40 @@ if (ENDPOINT_OVERRIDE) {
 // Use dependency injection to allow for easier unit testing
 module.exports.handler = require('./handler.js')({
     dynamo: {
-        scanBuildings: () => ddb.scan({ TableName: TABLE_NAME }).promise(),
+        scanBuildings: () => ddb.scan({ TableName: BUILDINGS_TABLE }).promise(),
         createBuildings: (buildings) => ddb.batchWrite({
             RequestItems: {
-                [TABLE_NAME]: buildings.map((building) => ({
+                [BUILDINGS_TABLE]: buildings.map((building) => ({
                     PutRequest: {
                         Item: building
                     }
                 }))
             }
         }).promise(),
-        putBuilding: (item) => ddb.put({ TableName: TABLE_NAME, Item: item }).promise(),
-        getBuilding: (uuid) => ddb.get({ TableName: TABLE_NAME, Key: { uuid }}).promise(),
-        deleteBuilding: (uuid) => ddb.delete({ TableName: TABLE_NAME, Key: { uuid }}).promise()
+        putBuilding: (item) => ddb.put({ TableName: BUILDINGS_TABLE, Item: item }).promise(),
+        getBuilding: (uuid) => ddb.get({ TableName: BUILDINGS_TABLE, Key: { uuid }}).promise(),
+        deleteBuilding: (uuid) => ddb.delete({ TableName: BUILDINGS_TABLE, Key: { uuid }}).promise(),
+
+        scanEvents: () => ddb.scan({ TableName: EVENTS_TABLE }).promise(),
+        deleteEvents: (uuids) => ddb.batchWrite({
+            RequestItems: {
+                [EVENTS_TABLE]: uuids.map((uuid) => ({
+                    DeleteRequest: {
+                        Key: { uuid }
+                    }
+                }))
+            }
+        }).promise(),
+
+        scanEateries: () => ddb.scan({ TableName: EATERIES_TABLE }).promise(),
+        deleteEateries: (uuids) => ddb.batchWrite({
+            RequestItems: {
+                [EATERIES_TABLE]: uuids.map((uuid) => ({
+                    DeleteRequest: {
+                        Key: { uuid }
+                    }
+                }))
+            }
+        }).promise(),
     }
 });

@@ -1,11 +1,13 @@
 const {
+    AWS_REGION,
     OPEN_HOUSES_TABLE,
     OPEN_HOUSE_ATTENDEES_TABLE,
+    EVENTS_TABLE,
     ENDPOINT_OVERRIDE
 } = process.env;
 
 const aws = require('aws-sdk');
-aws.config.update({ region: 'us-east-2' });
+aws.config.update({ region: AWS_REGION });
 
 let ddb;
 if (ENDPOINT_OVERRIDE) {
@@ -53,5 +55,16 @@ module.exports.handler = require('./handler.js')({
         }).promise()).Responses[OPEN_HOUSE_ATTENDEES_TABLE],
         putOpenHouseAttendees: (item) => ddb.put({ TableName: OPEN_HOUSE_ATTENDEES_TABLE, Item: item }).promise(),
         deleteOpenHouseAttendees: (uuid) => ddb.delete({ TableName: OPEN_HOUSE_ATTENDEES_TABLE, Key: { uuid }}).promise(),
+
+        scanEvents: () => ddb.scan({ TableName: EVENTS_TABLE }).promise(),
+        deleteEvents: (uuids) => ddb.batchWrite({
+            RequestItems: {
+                [EVENTS_TABLE]: uuids.map((uuid) => ({
+                    DeleteRequest: {
+                        Key: { uuid }
+                    }
+                }))
+            }
+        }).promise(),
     }
 });
