@@ -110,6 +110,30 @@ async function updateBuilding(dynamo, uuid, body) {
 }
 
 async function deleteBuilding(dynamo, uuid) {
+    const events = (await dynamo.scanEvents()).Items;
+    const eventUUIDsToDelete = [];
+    for (const event of events) {
+        if (event.building === uuid) {
+            eventUUIDsToDelete.push(event.uuid);
+        }
+    }
+
+    const eateries = (await dynamo.scanEateries()).Items;
+    const eateryUUIDsToDelete = [];
+    for (const eatery of eateries) {
+        if (eatery.building === uuid) {
+            eateryUUIDsToDelete.push(eatery.uuid);
+        }
+    }
+
+    if (eventUUIDsToDelete.length > 0) {
+        await dynamo.deleteEvents(eventUUIDsToDelete);
+    }
+
+    if (eateryUUIDsToDelete.length > 0) {
+        await dynamo.deleteEateries(eateryUUIDsToDelete);
+    }
+
     await dynamo.deleteBuilding(uuid);
 
     return response(status.OK);

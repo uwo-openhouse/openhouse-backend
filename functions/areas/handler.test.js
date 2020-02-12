@@ -272,17 +272,24 @@ describe('Areas Lambda', function () {
 
     describe('DELETE Requests', () => {
         const deleteAreaFn = jest.fn().mockResolvedValue({});
+        const scanEventsFn = jest.fn();
+        const deleteEventsFn = jest.fn().mockResolvedValue({});
         const handler = areas({
             dynamo: {
-                deleteArea: deleteAreaFn
+                deleteArea: deleteAreaFn,
+                scanEvents: scanEventsFn,
+                deleteEvents: deleteEventsFn
             }
         });
 
         afterEach(() => {
             deleteAreaFn.mockClear();
+            scanEventsFn.mockReset();
+            deleteEventsFn.mockClear();
         });
 
         test('accepts & deletes an area from the database', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
             const result = await handler({
                 httpMethod: 'DELETE',
                 pathParameters: {
@@ -291,11 +298,38 @@ describe('Areas Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.OK);
+            expect(deleteEventsFn).not.toHaveBeenCalled();
             expect(deleteAreaFn).toHaveBeenCalledTimes(1);
             expect(deleteAreaFn).toHaveBeenCalledWith('fee567a4-c080-4ce9-8771-50aba119ecb1');
         });
 
+        test('deletes events containing the area\'s UUID', async () => {
+            scanEventsFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: 'fee567a4-c080-4ce9-8771-50aba119ecb1',
+                    building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '2300',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }]
+            });
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'fee567a4-c080-4ce9-8771-50aba119ecb1'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(deleteEventsFn).toHaveBeenCalledWith(['ccfb14f5-41a7-4514-9aac-28440981c21a']);
+        });
+
         test('rejects when the area UUID is missing', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
             const result = await handler({
                 httpMethod: 'DELETE'
             });
@@ -306,6 +340,7 @@ describe('Areas Lambda', function () {
         });
 
         test('responds with an error when a database error occurs', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
             deleteAreaFn.mockRejectedValueOnce(new Error('testError'));
             const result = await handler({
                 httpMethod: 'DELETE',

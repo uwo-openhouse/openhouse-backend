@@ -6,6 +6,13 @@ Description: >
   Backend SAM & Infrastructure
 
 Parameters:
+  AdminUIBucketName:
+    Type: String
+#  AdminUIDomainName:
+#    Type: String
+#  AdminUICertificateARN:
+#    Type: String
+#    NoEcho: true
   AdminUILoginDomain:
     Type: String
   LoginCallbackURL:
@@ -35,6 +42,68 @@ Globals:
         ENDPOINT_OVERRIDE: ""
 
 Resources:
+  # Admin UI Frontend Bucket Resources
+
+  AdminUIBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref AdminUIBucketName
+
+  AdminUIBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AdminUIBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action: "s3:GetObject"
+            Effect: "Allow"
+            Principal:
+              CanonicalUser: !GetAtt AdminUIOriginAccessIdentity.S3CanonicalUserId
+            Resource: !Sub "${AdminUIBucket.Arn}/*"
+          - Action: "s3:ListBucket"
+            Effect: "Allow"
+            Principal:
+              CanonicalUser: !GetAtt AdminUIOriginAccessIdentity.S3CanonicalUserId
+            Resource: !GetAtt AdminUIBucket.Arn
+
+  # Admin UI CloudFront Resources
+
+  # Set policy to only allow access through CloudFront (HTTPS)
+  AdminUIOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Join [ "", [ "access-identity-", !GetAtt AdminUIBucket.DomainName ] ]
+
+  AdminUICloudFrontDisturbution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+#        Aliases:
+#          - !Ref AdminUIDomainName
+        Origins:
+          - DomainName: !GetAtt AdminUIBucket.DomainName
+            Id: S3-AdminUI-site
+            S3OriginConfig:
+              OriginAccessIdentity: !Join [ "", [ "origin-access-identity/cloudfront/", !Ref AdminUIOriginAccessIdentity ] ]
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          ForwardedValues:
+            QueryString: true
+          TargetOriginId: S3-AdminUI-site
+          ViewerProtocolPolicy: redirect-to-https
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true # Remove after updating w/ proper domain/cert
+#          AcmCertificateArn: !Ref AdminUICertificateARN
+#          MinimumProtocolVersion: TLSv1.2_2018
+#          SslSupportMethod: sni-only
+
   # Lambda Functions & API Events
 
   BuildingsFunction:
@@ -44,10 +113,16 @@ Resources:
       Handler: index.handler
       Environment:
         Variables:
-          TABLE_NAME: !Ref BuildingsTable
+          BUILDINGS_TABLE: !Ref BuildingsTable
+          EATERIES_TABLE: !Ref EateriesTable
+          EVENTS_TABLE: !Ref EventsTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref BuildingsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EateriesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventsTable
       Events:
         GatewayGet:
           Type: Api
@@ -81,7 +156,10 @@ Resources:
               Authorizer: CognitoAuthorizer
               AuthorizationScopes:
                 - uwo-openhouse-api/buildings:manage
-    DependsOn: BuildingsTable
+    DependsOn:
+      - BuildingsTable
+      - EateriesTable
+      - EventsTable
 
   AreasFunction:
     Type: AWS::Serverless::Function
@@ -90,10 +168,13 @@ Resources:
       Handler: index.handler
       Environment:
         Variables:
-          TABLE_NAME: !Ref AreasTable
+          AREAS_TABLE: !Ref AreasTable
+          EVENTS_TABLE: !Ref EventsTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref AreasTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventsTable
       Events:
         GatewayGet:
           Type: Api
@@ -127,7 +208,9 @@ Resources:
               Authorizer: CognitoAuthorizer
               AuthorizationScopes:
                 - uwo-openhouse-api/areas:manage
-    DependsOn: AreasTable
+    DependsOn:
+      - AreasTable
+      - EventsTable
 
   OpenHousesFunction:
     Type: AWS::Serverless::Function
@@ -138,11 +221,14 @@ Resources:
         Variables:
           OPEN_HOUSES_TABLE: !Ref OpenHousesTable
           OPEN_HOUSE_ATTENDEES_TABLE: !Ref OpenHouseAttendeesTable
+          EVENTS_TABLE: !Ref EventsTable
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref OpenHousesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref OpenHouseAttendeesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EventsTable
       Events:
         GatewayGet:
           Type: Api
@@ -179,6 +265,7 @@ Resources:
     DependsOn:
       - OpenHousesTable
       - OpenHouseAttendeesTable
+      - EventsTable
 
   OpenHouseAttendeesFunction:
     Type: AWS::Serverless::Function
@@ -490,8 +577,11 @@ Resources:
 
 Outputs:
   ApiEndpoint:
-    Description: "API Gateway endpoint URL for Prod stage"
+    Description: "Backend API Gateway endpoint URL"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  AdminUICloudFrontEndpoint:
+    Description: "Admin UI CloudFront Distribution URL"
+    Value: !GetAtt AdminUICloudFrontDisturbution.DomainName
   AdminUIDomain:
     Description: "Admin UI Sign In Domain"
     Value: !Sub

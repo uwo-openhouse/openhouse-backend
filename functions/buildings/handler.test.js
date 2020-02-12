@@ -280,17 +280,31 @@ describe('Buildings Lambda', function () {
 
     describe('DELETE Requests', () => {
         const deleteBuildingFn = jest.fn().mockResolvedValue({});
+        const scanEventsFn = jest.fn();
+        const scanEateriesFn = jest.fn();
+        const deleteEventsFn = jest.fn().mockResolvedValue({});
+        const deleteEateriesFn = jest.fn().mockResolvedValue({});
         const handler = buildings({
             dynamo: {
-                deleteBuilding: deleteBuildingFn
+                deleteBuilding: deleteBuildingFn,
+                scanEvents: scanEventsFn,
+                scanEateries: scanEateriesFn,
+                deleteEvents: deleteEventsFn,
+                deleteEateries: deleteEateriesFn
             }
         });
 
         afterEach(() => {
             deleteBuildingFn.mockClear();
+            scanEventsFn.mockReset();
+            scanEateriesFn.mockReset();
+            deleteEventsFn.mockClear();
+            deleteEateriesFn.mockClear();
         });
 
         test('accepts & deletes an building from the database', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
+            scanEateriesFn.mockResolvedValueOnce({ Items: [] });
             const result = await handler({
                 httpMethod: 'DELETE',
                 pathParameters: {
@@ -299,11 +313,63 @@ describe('Buildings Lambda', function () {
             });
 
             expect(result.statusCode).toEqual(status.OK);
+            expect(deleteEventsFn).not.toHaveBeenCalled();
+            expect(deleteEateriesFn).not.toHaveBeenCalled();
             expect(deleteBuildingFn).toHaveBeenCalledTimes(1);
             expect(deleteBuildingFn).toHaveBeenCalledWith('be8c6fbd-5af0-4c24-8da0-feff1d623c00');
         });
 
+        test('deletes events containing the buildings\'s UUID', async () => {
+            scanEventsFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: '95675864-c6e1-4761-a4bf-af9746b045b8',
+                    building: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '2300',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }]
+            });
+            scanEateriesFn.mockResolvedValueOnce({ Items: [] });
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(deleteEventsFn).toHaveBeenCalledWith(['ccfb14f5-41a7-4514-9aac-28440981c21a']);
+        });
+
+        test('deletes eateries containing the buildings\'s UUID', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
+            scanEateriesFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'The Grad Club',
+                    openTime: '10:00',
+                    closeTime: '22:00',
+                    building: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00',
+                    uuid: 'd3d0a56c-2b0d-46d9-9ae5-af55e8dce2e9'
+                }]
+            });
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00'
+                }
+            });
+
+            expect(result.statusCode).toEqual(status.OK);
+            expect(deleteEateriesFn).toHaveBeenCalledWith(['d3d0a56c-2b0d-46d9-9ae5-af55e8dce2e9']);
+        });
+
         test('rejects when the building UUID is missing', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
+            scanEateriesFn.mockResolvedValueOnce({ Items: [] });
             const result = await handler({
                 httpMethod: 'DELETE'
             });
@@ -314,6 +380,8 @@ describe('Buildings Lambda', function () {
         });
 
         test('responds with an error when a database error occurs', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
+            scanEateriesFn.mockResolvedValueOnce({ Items: [] });
             deleteBuildingFn.mockRejectedValueOnce(new Error('testError'));
             const result = await handler({
                 httpMethod: 'DELETE',
