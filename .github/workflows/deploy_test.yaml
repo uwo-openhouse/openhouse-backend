@@ -11,9 +11,7 @@ env:
   ADMIN_UI_BUCKET: uwo-openhouse-admin-ui-test
 #  ADMIN_UI_DOMAIN_NAME: todo-test.uwo.ca
 #  ADMIN_UI_CERTIFICATE_ARN: ${{ secrets.AWS_ADMIN_UI_CERTIFICATE_ARN_TEST }}
-  ADMIN_UI_DOMAIN: uwo-openhouse-test
-  LOGIN_CALLBACK_URL: https://frontend-app-todo.com/ # TODO: Replace with Admin UI
-  LOGOUT_REDIRECT_URL: https://frontend-app-todo.com/ # TODO: Replace with Admin UI
+  ADMIN_UI_LOGIN_SUBDOMAIN: uwo-openhouse-test
 
 jobs:
   test:
@@ -59,6 +57,4 @@ jobs:
           --parameter-overrides ParameterKey=AdminUIBucketName,ParameterValue=$ADMIN_UI_BUCKET
 #                                ParameterKey=AdminUIDomainName,ParameterValue=$ADMIN_UI_DOMAIN_NAME
 #                                ParameterKey=AdminUICertificateARN,ParameterValue=$ADMIN_UI_CERTIFICATE_ARN
-                                ParameterKey=AdminUILoginDomain,ParameterValue=$ADMIN_UI_DOMAIN
-                                ParameterKey=LoginCallbackURL,ParameterValue=$LOGIN_CALLBACK_URL
-                                ParameterKey=LogoutRedirectURL,ParameterValue=$LOGOUT_REDIRECT_URL
+                                ParameterKey=AdminUILoginSubDomain,ParameterValue=$ADMIN_UI_LOGIN_SUBDOMAIN

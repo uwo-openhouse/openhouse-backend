@@ -13,11 +13,7 @@ Parameters:
 #  AdminUICertificateARN:
 #    Type: String
 #    NoEcho: true
-  AdminUILoginDomain:
-    Type: String
-  LoginCallbackURL:
-    Type: String
-  LogoutRedirectURL:
+  AdminUILoginSubDomain:
     Type: String
 
 Globals:
@@ -81,7 +77,7 @@ Resources:
     Properties:
       DistributionConfig:
         Enabled: true
-#        Aliases:
+#        Aliases: TODO: Uncomment
 #          - !Ref AdminUIDomainName
         Origins:
           - DomainName: !GetAtt AdminUIBucket.DomainName
@@ -99,7 +95,7 @@ Resources:
             ResponseCode: 200
             ResponsePagePath: /index.html
         ViewerCertificate:
-          CloudFrontDefaultCertificate: true # Remove after updating w/ proper domain/cert
+          CloudFrontDefaultCertificate: true # TODO: Remove & uncomment below
 #          AcmCertificateArn: !Ref AdminUICertificateARN
 #          MinimumProtocolVersion: TLSv1.2_2018
 #          SslSupportMethod: sni-only
@@ -538,9 +534,11 @@ Resources:
       SupportedIdentityProviders:
         - COGNITO
       CallbackURLs:
-        - !Ref LoginCallbackURL
+        - !Sub "https://${AdminUICloudFrontDisturbution.DomainName}/"
+#        - !Sub "https://${AdminUIDomainName}/" # TODO: Replace
       LogoutURLs:
-        - !Ref LogoutRedirectURL
+        - !Sub "https://${AdminUICloudFrontDisturbution.DomainName}/"
+#        - !Sub "https://${AdminUIDomainName}/" # TODO: Replace
       AllowedOAuthFlows:
         - implicit
       AllowedOAuthScopes:
@@ -572,7 +570,7 @@ Resources:
   AdminPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
-      Domain: !Ref AdminUILoginDomain
+      Domain: !Ref AdminUILoginSubDomain
       UserPoolId: !Ref AdminPool
 
 Outputs:
@@ -582,8 +580,16 @@ Outputs:
   AdminUICloudFrontEndpoint:
     Description: "Admin UI CloudFront Distribution URL"
     Value: !GetAtt AdminUICloudFrontDisturbution.DomainName
-  AdminUIDomain:
-    Description: "Admin UI Sign In Domain"
+  AdminUILoginURL:
+    Description: "Admin UI Sign In URL"
     Value: !Sub
-      - "https://${AdminUILoginDomain}.auth.${AWS::Region}.amazoncognito.com/"
-      - Domain: !Ref AdminPoolDomain
+      - "https://${AdminPoolDomain}.auth.${AWS::Region}.amazoncognito.com/login?client_id=${AdminPoolClient}&response_type=token&scope=${Scope}&redirect_uri=${RedirectURI}"
+      - Scope: !Join
+        - "+"
+        - - "uwo-openhouse-api/areas:manage"
+          - "uwo-openhouse-api/buildings:manage"
+          - "uwo-openhouse-api/eateries:manage"
+          - "uwo-openhouse-api/events:manage"
+          - "uwo-openhouse-api/openhouses:manage"
+        RedirectURI: !Sub "https://${AdminUICloudFrontDisturbution.DomainName}/"
+#        RedirectURI: !Sub "https://${AdminUIDomainName}/" # TODO: Replace
