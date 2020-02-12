@@ -548,6 +548,7 @@ Resources:
         - uwo-openhouse-api/events:manage
         - uwo-openhouse-api/openhouses:manage
       GenerateSecret: false
+    DependsOn: AdminPoolResourceServer
 
   AdminPoolResourceServer:
     Type: AWS::Cognito::UserPoolResourceServer
