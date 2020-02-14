@@ -29,6 +29,13 @@ Globals:
           UserPoolArn: !GetAtt AdminPool.Arn
           Identity:
             Header: Authorization
+    GatewayResponses:
+      DEFAULT_4XX:
+        ResponseParameters:
+          Headers:
+            Access-Control-Allow-Origin: "'*'"
+        ResponseTemplates:
+          application/json: "{\"error\": $context.error.messageString }"
 
   Function:
     Timeout: 10
