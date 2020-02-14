@@ -20,7 +20,7 @@ Globals:
   Api:
     Cors:
       AllowMethods: "'OPTIONS,GET,POST,PUT,DELETE'"
-      AllowHeaders: "'Content-Type'"
+      AllowHeaders: "'Content-Type, Authorization'"
       AllowOrigin: "'*'"
     Auth:
       Authorizers:
