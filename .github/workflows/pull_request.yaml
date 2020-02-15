@@ -20,3 +20,20 @@ jobs:
         run: yarn install
       - name: Run Tests
         run: yarn test --ci
+  validate_template:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Configure PATH for Homebrew
+        run: echo "::add-path::/home/linuxbrew/.linuxbrew/bin"
+      - name: Install Homebrew & SAM CLI
+        run: |
+          sudo apt-get install build-essential curl file git
+          sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
+          brew --version
+          brew tap aws/tap
+          brew install aws-sam-cli
+          sam --version
+      - name: Validate Template
+        run: sam validate

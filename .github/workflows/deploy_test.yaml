@@ -49,6 +49,8 @@ jobs:
           brew tap aws/tap
           brew install aws-sam-cli
           sam --version
+      - name: Validate Template
+        run: sam validate
       - name: Build Template
         run: sam build
       - name: Deploy
