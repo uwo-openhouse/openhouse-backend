@@ -114,6 +114,7 @@ Resources:
     Properties:
       CodeUri: functions/buildings/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           BUILDINGS_TABLE: !Ref BuildingsTable
@@ -169,6 +170,7 @@ Resources:
     Properties:
       CodeUri: functions/areas/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           AREAS_TABLE: !Ref AreasTable
@@ -220,6 +222,7 @@ Resources:
     Properties:
       CodeUri: functions/openhouses/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           OPEN_HOUSES_TABLE: !Ref OpenHousesTable
@@ -275,6 +278,7 @@ Resources:
     Properties:
       CodeUri: functions/openhouse-attendees/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           TABLE_NAME: !Ref OpenHouseAttendeesTable
@@ -295,6 +299,7 @@ Resources:
     Properties:
       CodeUri: functions/eateries/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           EATERIES_TABLE: !Ref EateriesTable
@@ -346,6 +351,7 @@ Resources:
     Properties:
       CodeUri: functions/events/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           EVENTS_TABLE: !Ref EventsTable
@@ -409,6 +415,7 @@ Resources:
     Properties:
       CodeUri: functions/event-attendees/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           TABLE_NAME: !Ref EventAttendeesTable
