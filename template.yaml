@@ -13,13 +13,30 @@ Parameters:
 #  AdminUICertificateARN:
 #    Type: String
 #    NoEcho: true
+  AdminUILoginSubDomain:
+    Type: String
 
 Globals:
   Api:
     Cors:
       AllowMethods: "'OPTIONS,GET,POST,PUT,DELETE'"
-      AllowHeaders: "'Content-Type'"
+      AllowHeaders: "'Content-Type, Authorization'"
       AllowOrigin: "'*'"
+    Auth:
+      Authorizers:
+        CognitoAuthorizer:
+          AuthType: COGNITO_USER_POOLS
+          UserPoolArn: !GetAtt AdminPool.Arn
+          Identity:
+            Header: Authorization
+    GatewayResponses:
+      DEFAULT_4XX:
+        ResponseParameters:
+          Headers:
+            Access-Control-Allow-Origin: "'*'"
+        ResponseTemplates:
+          application/json: "{\"error\": $context.error.messageString }"
+
   Function:
     Timeout: 10
     Runtime: nodejs12.x
@@ -67,7 +84,7 @@ Resources:
     Properties:
       DistributionConfig:
         Enabled: true
-#        Aliases:
+#        Aliases: TODO: Uncomment
 #          - !Ref AdminUIDomainName
         Origins:
           - DomainName: !GetAtt AdminUIBucket.DomainName
@@ -85,7 +102,7 @@ Resources:
             ResponseCode: 200
             ResponsePagePath: /index.html
         ViewerCertificate:
-          CloudFrontDefaultCertificate: true # Remove after updating w/ proper domain/cert
+          CloudFrontDefaultCertificate: true # TODO: Remove & uncomment below
 #          AcmCertificateArn: !Ref AdminUICertificateARN
 #          MinimumProtocolVersion: TLSv1.2_2018
 #          SslSupportMethod: sni-only
@@ -97,6 +114,7 @@ Resources:
     Properties:
       CodeUri: functions/buildings/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           BUILDINGS_TABLE: !Ref BuildingsTable
@@ -110,16 +128,38 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref EventsTable
       Events:
-        Gateway:
+        GatewayGet:
           Type: Api
           Properties:
             Path: /buildings
-            Method: ANY
-        GatewayParam:
+            Method: GET
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /buildings
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/buildings:manage
+        GatewayPut:
           Type: Api
           Properties:
             Path: /buildings/{uuid}
-            Method: ANY
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/buildings:manage
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /buildings/{uuid}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/buildings:manage
     DependsOn:
       - BuildingsTable
       - EateriesTable
@@ -130,6 +170,7 @@ Resources:
     Properties:
       CodeUri: functions/areas/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           AREAS_TABLE: !Ref AreasTable
@@ -140,16 +181,38 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref EventsTable
       Events:
-        Gateway:
+        GatewayGet:
           Type: Api
           Properties:
             Path: /areas
-            Method: ANY
-        GatewayParam:
+            Method: GET
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /areas
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/areas:manage
+        GatewayPut:
           Type: Api
           Properties:
             Path: /areas/{uuid}
-            Method: ANY
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/areas:manage
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /areas/{uuid}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/areas:manage
     DependsOn:
       - AreasTable
       - EventsTable
@@ -159,6 +222,7 @@ Resources:
     Properties:
       CodeUri: functions/openhouses/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           OPEN_HOUSES_TABLE: !Ref OpenHousesTable
@@ -172,16 +236,38 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref EventsTable
       Events:
-        Gateway:
+        GatewayGet:
           Type: Api
           Properties:
             Path: /openhouses
-            Method: ANY
-        GatewayParam:
+            Method: GET
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /openhouses
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/openhouses:manage
+        GatewayPut:
           Type: Api
           Properties:
             Path: /openhouses/{uuid}
-            Method: ANY
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/openhouses:manage
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /openhouses/{uuid}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/openhouses:manage
     DependsOn:
       - OpenHousesTable
       - OpenHouseAttendeesTable
@@ -192,6 +278,7 @@ Resources:
     Properties:
       CodeUri: functions/openhouse-attendees/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           TABLE_NAME: !Ref OpenHouseAttendeesTable
@@ -212,6 +299,7 @@ Resources:
     Properties:
       CodeUri: functions/eateries/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           EATERIES_TABLE: !Ref EateriesTable
@@ -222,16 +310,38 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref BuildingsTable
       Events:
-        Gateway:
+        GatewayGet:
           Type: Api
           Properties:
             Path: /eateries
-            Method: ANY
-        GatewayParam:
+            Method: GET
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /eateries
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/eateries:manage
+        GatewayPut:
           Type: Api
           Properties:
             Path: /eateries/{uuid}
-            Method: ANY
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/eateries:manage
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /eateries/{uuid}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/eateries:manage
     DependsOn:
       - EateriesTable
       - BuildingsTable
@@ -241,6 +351,7 @@ Resources:
     Properties:
       CodeUri: functions/events/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           EVENTS_TABLE: !Ref EventsTable
@@ -260,16 +371,38 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref BuildingsTable
       Events:
-        Gateway:
+        GatewayGet:
           Type: Api
           Properties:
             Path: /events
-            Method: ANY
-        GatewayParam:
+            Method: GET
+        GatewayPost:
+          Type: Api
+          Properties:
+            Path: /events
+            Method: POST
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/events:manage
+        GatewayPut:
           Type: Api
           Properties:
             Path: /events/{uuid}
-            Method: ANY
+            Method: PUT
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/events:manage
+        GatewayDelete:
+          Type: Api
+          Properties:
+            Path: /events/{uuid}
+            Method: DELETE
+            Auth:
+              Authorizer: CognitoAuthorizer
+              AuthorizationScopes:
+                - uwo-openhouse-api/events:manage
     DependsOn:
       - EventsTable
       - OpenHousesTable
@@ -282,6 +415,7 @@ Resources:
     Properties:
       CodeUri: functions/event-attendees/
       Handler: index.handler
+      MemorySize: 256
       Environment:
         Variables:
           TABLE_NAME: !Ref EventAttendeesTable
@@ -389,6 +523,71 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
+  # Cognito resources for admin authorization & UI
+
+  AdminPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: OpenHouse-AdminPool
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+
+  AdminPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref AdminPool
+      ClientName: OpenHouse-AdminPoolClient
+      AllowedOAuthFlowsUserPoolClient: true
+      SupportedIdentityProviders:
+        - COGNITO
+      CallbackURLs:
+        - !Sub "https://${AdminUICloudFrontDisturbution.DomainName}/"
+#        - !Sub "https://${AdminUIDomainName}/" # TODO: Replace
+      LogoutURLs:
+        - !Sub "https://${AdminUICloudFrontDisturbution.DomainName}/"
+#        - !Sub "https://${AdminUIDomainName}/" # TODO: Replace
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthScopes:
+        - uwo-openhouse-api/areas:manage
+        - uwo-openhouse-api/buildings:manage
+        - uwo-openhouse-api/eateries:manage
+        - uwo-openhouse-api/events:manage
+        - uwo-openhouse-api/openhouses:manage
+      GenerateSecret: false
+    DependsOn: AdminPoolResourceServer
+
+  AdminPoolResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      Identifier: uwo-openhouse-api
+      Name: Open House
+      Scopes:
+        - ScopeName: "areas:manage"
+          ScopeDescription: "Management of areas resource"
+        - ScopeName: "buildings:manage"
+          ScopeDescription: "Management of buildings resource"
+        - ScopeName: "eateries:manage"
+          ScopeDescription: "Management of eateries resource"
+        - ScopeName: "events:manage"
+          ScopeDescription: "Management of events resource"
+        - ScopeName: "openhouses:manage"
+          ScopeDescription: "Management of open houses resource"
+      UserPoolId: !Ref AdminPool
+
+  AdminPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref AdminUILoginSubDomain
+      UserPoolId: !Ref AdminPool
+
 Outputs:
   ApiEndpoint:
     Description: "Backend API Gateway endpoint URL"
@@ -396,3 +595,16 @@ Outputs:
   AdminUICloudFrontEndpoint:
     Description: "Admin UI CloudFront Distribution URL"
     Value: !GetAtt AdminUICloudFrontDisturbution.DomainName
+  AdminUILoginURL:
+    Description: "Admin UI Sign In URL"
+    Value: !Sub
+      - "https://${AdminPoolDomain}.auth.${AWS::Region}.amazoncognito.com/login?client_id=${AdminPoolClient}&response_type=token&scope=${Scope}&redirect_uri=${RedirectURI}"
+      - Scope: !Join
+        - "+"
+        - - "uwo-openhouse-api/areas:manage"
+          - "uwo-openhouse-api/buildings:manage"
+          - "uwo-openhouse-api/eateries:manage"
+          - "uwo-openhouse-api/events:manage"
+          - "uwo-openhouse-api/openhouses:manage"
+        RedirectURI: !Sub "https://${AdminUICloudFrontDisturbution.DomainName}/"
+#        RedirectURI: !Sub "https://${AdminUIDomainName}/" # TODO: Replace

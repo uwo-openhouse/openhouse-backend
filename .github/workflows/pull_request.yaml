@@ -20,3 +20,26 @@ jobs:
         run: yarn install
       - name: Run Tests
         run: yarn test --ci
+  validate_template:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_TEST }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_TEST }}
+          aws-region: us-east-1
+      - name: Configure PATH for Homebrew
+        run: echo "::add-path::/home/linuxbrew/.linuxbrew/bin"
+      - name: Install Homebrew & SAM CLI
+        run: |
+          sudo apt-get install build-essential curl file git
+          sh -c "$(curl -fsSL https://raw.githubusercontent.com/Linuxbrew/install/master/install.sh)"
+          brew --version
+          brew tap aws/tap
+          brew install aws-sam-cli
+          sam --version
+      - name: Validate Template
+        run: sam validate
