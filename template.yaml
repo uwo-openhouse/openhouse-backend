@@ -36,7 +36,6 @@ Globals:
             Access-Control-Allow-Origin: "'*'"
         ResponseTemplates:
           application/json: "{\"error\": $context.error.messageString }"
-
   Function:
     Timeout: 10
     Runtime: nodejs12.x
@@ -587,6 +586,19 @@ Resources:
     Properties:
       Domain: !Ref AdminUILoginSubDomain
       UserPoolId: !Ref AdminPool
+
+  AdminPoolLoginCustomization:
+    Type: AWS::Cognito::UserPoolUICustomizationAttachment
+    Properties:
+      UserPoolId: !Ref AdminPool
+      ClientId: !Ref AdminPoolClient
+      CSS: >
+        .submitButton-customizable {
+          background-color: #007bff;
+        }
+        .submitButton-customizable:hover {
+          background-color: #0069d9;
+        }
 
 Outputs:
   ApiEndpoint:
