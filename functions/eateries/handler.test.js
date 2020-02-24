@@ -4,6 +4,10 @@ const status = require('http-status');
 const uuidRegex = new RegExp('^[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}$');
 
 describe('Eateries Lambda', function () {
+    beforeAll(() => {
+        process.env.ORIGIN = 'https://uwo-test-origin.io'
+    });
+
     describe('GET Requests', () => {
         const scanEateriesFn = jest.fn();
         const handler = eateries({
@@ -38,6 +42,23 @@ describe('Eateries Lambda', function () {
                 uuid: 'b77afbf8-25a9-4752-90a3-93167e886245',
                 building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
             }]);
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            scanEateriesFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'The Grad Club',
+                    openTime: '10:00',
+                    closeTime: '22:00',
+                    uuid: 'b77afbf8-25a9-4752-90a3-93167e886245',
+                    building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
+                }]
+            });
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('responds with a message when a database error occurs', async () => {
@@ -143,6 +164,21 @@ describe('Eateries Lambda', function () {
                 building: 'f16ab4ca-71f8-43bb-8762-62d9cffe3cc8',
                 uuid: expect.stringMatching(uuidRegex)
             }])
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            buildingExistsFn.mockResolvedValueOnce(true);
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'The Grad Club',
+                    openTime: '10:00',
+                    closeTime: '22:00',
+                    building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
+                })
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('rejects when a single eatery is invalid', async () => {
@@ -262,6 +298,25 @@ describe('Eateries Lambda', function () {
                 building: '0b16d09b-bd73-4849-83f7-b3bcec909e20',
                 uuid: 'c24e551e-c914-4198-b3fc-d1d040f53a0f'
             });
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            getEateryFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(true);
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'The Grad Club',
+                    openTime: '10:00',
+                    closeTime: '22:00',
+                    building: '0b16d09b-bd73-4849-83f7-b3bcec909e20'
+                }),
+                pathParameters: {
+                    uuid: 'c24e551e-c914-4198-b3fc-d1d040f53a0f'
+                }
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('rejects when the eatery UUID is missing', async () => {
@@ -386,6 +441,17 @@ describe('Eateries Lambda', function () {
             expect(result.statusCode).toEqual(status.OK);
             expect(deleteEateryFn).toHaveBeenCalledTimes(1);
             expect(deleteEateryFn).toHaveBeenCalledWith('c24e551e-c914-4198-b3fc-d1d040f53a0f');
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'c24e551e-c914-4198-b3fc-d1d040f53a0f'
+                }
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('rejects when the eatery UUID is missing', async () => {

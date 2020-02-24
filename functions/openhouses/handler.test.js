@@ -4,6 +4,10 @@ const status = require('http-status');
 const uuidRegex = new RegExp('^[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}$');
 
 describe('Open Houses Lambda', function () {
+    beforeAll(() => {
+        process.env.ORIGIN = 'https://uwo-test-origin.io'
+    });
+
     describe('GET Requests', () => {
         const scanOpenHousesFn = jest.fn();
         const getOpenHouseAttendeesFn = jest.fn();
@@ -62,6 +66,26 @@ describe('Open Houses Lambda', function () {
             expect(getOpenHouseAttendeesFn).toHaveBeenCalledWith([
                 'db028071-7e1d-4d6b-8999-d3111b558f8d', '6a14b924-a0fd-420e-983b-8245483dbb66'
             ]);
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            scanOpenHousesFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'Fall Open House 2020',
+                    date: 1579660681,
+                    info: 'Important Details',
+                    visible: false,
+                    uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
+                }]
+            });
+            getOpenHouseAttendeesFn.mockResolvedValueOnce([{
+                uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d', attendees: 3
+            }]);
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('handles an empty database', async () => {
@@ -220,6 +244,20 @@ describe('Open Houses Lambda', function () {
             }])
         });
 
+        test('contains correct Allow-Origin CORS header', async () => {
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'Fall Open House 2020',
+                    date: 1579660681,
+                    info: 'Important Details',
+                    visible: false
+                })
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
+        });
+
         test('rejects when a single open house is invalid', async () => {
             const result = await handler({
                 httpMethod: 'POST',
@@ -315,6 +353,24 @@ describe('Open Houses Lambda', function () {
                 visible: false,
                 uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
             });
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            getOpenHouseFn.mockResolvedValueOnce({ Item: {} });
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'Fall Open House 2020',
+                    date: 1579660681,
+                    info: 'Important Details',
+                    visible: false
+                }),
+                pathParameters: {
+                    uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
+                }
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('rejects when open house UUID is missing', async () => {
@@ -431,6 +487,18 @@ describe('Open Houses Lambda', function () {
             expect(deleteOpenHouseFn).toHaveBeenCalledWith('db028071-7e1d-4d6b-8999-d3111b558f8d');
             expect(deleteOpenHouseAttendeesFn).toHaveBeenCalledTimes(1);
             expect(deleteOpenHouseAttendeesFn).toHaveBeenCalledWith('db028071-7e1d-4d6b-8999-d3111b558f8d');
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'db028071-7e1d-4d6b-8999-d3111b558f8d'
+                }
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('deletes events containing the buildings\'s UUID', async () => {

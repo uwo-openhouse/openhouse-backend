@@ -4,6 +4,10 @@ const status = require('http-status');
 const uuidRegex = new RegExp('^[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}$');
 
 describe('Areas Lambda', function () {
+    beforeAll(() => {
+        process.env.ORIGIN = 'https://uwo-test-origin.io'
+    });
+
     describe('GET Requests', () => {
         const scanAreasFn = jest.fn();
         const handler = areas({
@@ -34,6 +38,21 @@ describe('Areas Lambda', function () {
                 color: '#FFF',
                 uuid: 'fee567a4-c080-4ce9-8771-50aba119ecb1'
             }]);
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            scanAreasFn.mockResolvedValueOnce({
+                Items: [{
+                    name: "Faculty of Testing",
+                    color: '#FFF',
+                    uuid: 'fee567a4-c080-4ce9-8771-50aba119ecb1'
+                }]
+            });
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('responds with a message when a database error occurs', async () => {
@@ -117,6 +136,18 @@ describe('Areas Lambda', function () {
             }])
         });
 
+        test('contains correct Allow-Origin CORS header', async () => {
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'Faculty of Testing',
+                    color: '#000'
+                })
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
+        });
+
         test('rejects when a single area is invalid', async () => {
             const result = await handler({
                 httpMethod: 'POST',
@@ -198,6 +229,22 @@ describe('Areas Lambda', function () {
                 color: '#bbb',
                 uuid: 'fee567a4-c080-4ce9-8771-50aba119ecb1'
             });
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            getAreaFn.mockResolvedValueOnce({ Item: {} });
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'Faculty of Testing Updated',
+                    color: '#bbb'
+                }),
+                pathParameters: {
+                    uuid: 'fee567a4-c080-4ce9-8771-50aba119ecb1'
+                }
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('rejects when the area UUID is missing', async () => {
@@ -301,6 +348,18 @@ describe('Areas Lambda', function () {
             expect(deleteEventsFn).not.toHaveBeenCalled();
             expect(deleteAreaFn).toHaveBeenCalledTimes(1);
             expect(deleteAreaFn).toHaveBeenCalledWith('fee567a4-c080-4ce9-8771-50aba119ecb1');
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'fee567a4-c080-4ce9-8771-50aba119ecb1'
+                }
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('deletes events containing the area\'s UUID', async () => {

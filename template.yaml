@@ -13,7 +13,7 @@ Globals:
     Cors:
       AllowMethods: "'OPTIONS,GET,POST,PUT,DELETE'"
       AllowHeaders: "'Content-Type, Authorization'"
-      AllowOrigin: "'*'"
+      AllowOrigin: !Sub "'https://${AdminUICloudFrontDisturbution.DomainName}'"
     Auth:
       Authorizers:
         CognitoAuthorizer:
@@ -34,6 +34,7 @@ Globals:
     Environment:
       Variables:
         ENDPOINT_OVERRIDE: ""
+        ORIGIN: !Sub "https://${AdminUICloudFrontDisturbution.DomainName}"
 
 Resources:
   ##################### Admin UI Frontend Bucket Resources #####################
