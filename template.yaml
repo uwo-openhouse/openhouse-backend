@@ -7,13 +7,19 @@ Parameters:
     Type: String
   AdminUILoginSubDomain:
     Type: String
+  EnvType:
+    Type: String
+    Default: local
+
+Conditions:
+  IsLocal: !Equals [ !Ref EnvType, local ]
 
 Globals:
   Api:
     Cors:
       AllowMethods: "'OPTIONS,GET,POST,PUT,DELETE'"
       AllowHeaders: "'Content-Type, Authorization'"
-      AllowOrigin: !Sub "'https://${AdminUICloudFrontDisturbution.DomainName}'"
+      AllowOrigin: !If [ IsLocal, "'*'", !Sub "'https://${AdminUICloudFrontDisturbution.DomainName}'" ]
     Auth:
       Authorizers:
         CognitoAuthorizer:
