@@ -1,9 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  openhouse-backend
-
-  Backend SAM & Infrastructure
+Description: Backend SAM & Infrastructure
 
 Parameters:
   AdminUIBucketName:
@@ -39,7 +36,7 @@ Globals:
         ENDPOINT_OVERRIDE: ""
 
 Resources:
-  # Admin UI Frontend Bucket Resources
+  ##################### Admin UI Frontend Bucket Resources #####################
 
   AdminUIBucket:
     Type: AWS::S3::Bucket
@@ -64,7 +61,7 @@ Resources:
               CanonicalUser: !GetAtt AdminUIOriginAccessIdentity.S3CanonicalUserId
             Resource: !GetAtt AdminUIBucket.Arn
 
-  # Admin UI CloudFront Resources
+  ##################### Admin UI Frontend CloudFront Resources #####################
 
   # Set policy to only allow access through CloudFront (HTTPS)
   AdminUIOriginAccessIdentity:
@@ -96,7 +93,7 @@ Resources:
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
 
-  # Lambda Functions & API Events
+  ##################### Lambda Functions & API Events #####################
 
   BuildingsFunction:
     Type: AWS::Serverless::Function
@@ -425,7 +422,7 @@ Resources:
     DependsOn:
       - EventAttendeesTable
 
-  # DynamoDB Tables
+  ##################### DynamoDB Tables #####################
   # Remember to update local-test/env_*.json & setup_dynamo.js when adding/updating tables
 
   BuildingsTable:
@@ -512,7 +509,7 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
-  # Cognito resources for admin authorization & UI
+  ##################### Cognito resources for Admin UI auth #####################
 
   AdminPool:
     Type: AWS::Cognito::UserPool
