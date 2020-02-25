@@ -26,7 +26,7 @@ const tables = [{
 }];
 
 const aws = require('aws-sdk');
-aws.config.update({ region: 'us-east-2' });
+aws.config.update({ region: 'us-east-1' });
 
 (async function() {
     try {

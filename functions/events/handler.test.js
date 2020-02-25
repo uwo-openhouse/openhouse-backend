@@ -4,6 +4,10 @@ const status = require('http-status');
 const uuidRegex = new RegExp('^[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}$');
 
 describe('Events Lambda', function () {
+    beforeAll(() => {
+        process.env.ORIGIN = 'https://uwo-test-origin.io'
+    });
+
     describe('GET Requests', () => {
         const scanEventsFn = jest.fn();
         const getEventAttendeesFn = jest.fn();
@@ -79,6 +83,30 @@ describe('Events Lambda', function () {
             expect(getEventAttendeesFn).toHaveBeenCalledWith([
                 'ccfb14f5-41a7-4514-9aac-28440981c21a', '0354a6ec-5577-4ef2-982e-5b0d0dff78b9'
             ]);
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            scanEventsFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                    building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '2300',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }]
+            });
+            getEventAttendeesFn.mockResolvedValueOnce([{
+                uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a', attendees: 4
+            }]);
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('handles an empty database', async () => {
@@ -334,6 +362,28 @@ describe('Events Lambda', function () {
                 attendees: 0,
                 uuid: expect.stringMatching(uuidRegex)
             }])
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            buildingExistsFn.mockResolvedValueOnce(true);
+            areaExistsFn.mockResolvedValueOnce(true);
+            openHouseExistsFn.mockResolvedValueOnce(true);
+
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                    building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '2300',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                })
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('substitutes empty strings in the database', async () => {
@@ -600,6 +650,32 @@ describe('Events Lambda', function () {
             });
         });
 
+        test('contains correct Allow-Origin CORS header', async () => {
+            getEventFn.mockResolvedValueOnce({ Item: {} });
+            buildingExistsFn.mockResolvedValueOnce(true);
+            areaExistsFn.mockResolvedValueOnce(true);
+            openHouseExistsFn.mockResolvedValueOnce(true);
+
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'Science Presentation',
+                    description: 'Sciency stuff',
+                    area: 'e1b0e6d0-b3b2-42bf-8d4c-9801f374989e',
+                    building: '89bb0745-b18d-4b8e-913c-4c768012c14d',
+                    openHouse: 'e3a8d98f-775a-46da-b977-f2fe1fa6f360',
+                    room: '2300',
+                    startTime: '05:00',
+                    endTime: '06:00',
+                }),
+                pathParameters: {
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
+        });
+
         test('substitutes empty strings in the database', async () => {
             getEventFn.mockResolvedValueOnce({ Item: {} });
             buildingExistsFn.mockResolvedValueOnce(true);
@@ -842,6 +918,16 @@ describe('Events Lambda', function () {
             expect(result.statusCode).toEqual(status.OK);
             expect(deleteEventFn).toHaveBeenCalledWith('ccfb14f5-41a7-4514-9aac-28440981c21a');
             expect(deleteEventAttendeesFn).toHaveBeenCalledWith('ccfb14f5-41a7-4514-9aac-28440981c21a');
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'ccfb14f5-41a7-4514-9aac-28440981c21a'
+                }
+            });
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('rejects when the event UUID is missing', async () => {

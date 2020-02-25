@@ -10,8 +10,6 @@ env:
   BUILD_BUCKET: uwo-openhouse-backend-builds-test
   ADMIN_UI_BUCKET: uwo-openhouse-admin-ui-test
   ADMIN_UI_LOGIN_SUBDOMAIN: uwo-openhouse-test
-#  ADMIN_UI_DOMAIN_NAME: todo-test.uwo.ca
-#  ADMIN_UI_CERTIFICATE_ARN: ${{ secrets.AWS_ADMIN_UI_CERTIFICATE_ARN_TEST }}
 
 jobs:
   test:
@@ -56,7 +54,6 @@ jobs:
       - name: Deploy
         run: >
           sam deploy --stack-name $STACK_NAME --capabilities CAPABILITY_IAM --s3-bucket $BUILD_BUCKET
-          --parameter-overrides ParameterKey=AdminUIBucketName,ParameterValue=$ADMIN_UI_BUCKET
+          --parameter-overrides ParameterKey=EnvType,ParameterValue=test
+          ParameterKey=AdminUIBucketName,ParameterValue=$ADMIN_UI_BUCKET
           ParameterKey=AdminUILoginSubDomain,ParameterValue=$ADMIN_UI_LOGIN_SUBDOMAIN
-#          ParameterKey=AdminUIDomainName,ParameterValue=$ADMIN_UI_DOMAIN_NAME
-#          ParameterKey=AdminUICertificateARN,ParameterValue=$ADMIN_UI_CERTIFICATE_ARN

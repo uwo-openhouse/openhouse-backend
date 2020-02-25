@@ -4,6 +4,10 @@ const status = require('http-status');
 const uuidRegex = new RegExp('^[0-9a-f]{8}\\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\\b[0-9a-f]{12}$');
 
 describe('Buildings Lambda', function () {
+    beforeAll(() => {
+        process.env.ORIGIN = 'https://uwo-test-origin.io'
+    });
+
     describe('GET Requests', () => {
         const scanBuildingsFn = jest.fn();
         const handler = buildings({
@@ -40,6 +44,24 @@ describe('Buildings Lambda', function () {
                 },
                 uuid: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00'
             }]);
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            scanBuildingsFn.mockResolvedValueOnce({
+                Items: [{
+                    name: 'Middlesex College',
+                    position: {
+                        lat: 32.111,
+                        lng: -10.222
+                    },
+                    uuid: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00'
+                }]
+            });
+            const result = await handler({
+                httpMethod: 'GET'
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('responds with a message when a database error occurs', async () => {
@@ -121,6 +143,18 @@ describe('Buildings Lambda', function () {
                 position: { lat: 32.111, lng: -10.222 },
                 uuid: expect.stringMatching(uuidRegex)
             }])
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            const result = await handler({
+                httpMethod: 'POST',
+                body: JSON.stringify({
+                    name: 'North Campus Building',
+                    position: { lat: 35.111, lng: -12.222 }
+                })
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('rejects when a single building is invalid', async () => {
@@ -205,6 +239,22 @@ describe('Buildings Lambda', function () {
                 position: { lat: 35.111, lng: -12.222 },
                 uuid: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00'
             });
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            getBuildingFn.mockResolvedValueOnce({ Item: {} });
+            const result = await handler({
+                httpMethod: 'PUT',
+                body: JSON.stringify({
+                    name: 'North Campus Building',
+                    position: { lat: 35.111, lng: -12.222 }
+                }),
+                pathParameters: {
+                    uuid: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00'
+                }
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('rejects when the building UUID is missing', async () => {
@@ -317,6 +367,19 @@ describe('Buildings Lambda', function () {
             expect(deleteEateriesFn).not.toHaveBeenCalled();
             expect(deleteBuildingFn).toHaveBeenCalledTimes(1);
             expect(deleteBuildingFn).toHaveBeenCalledWith('be8c6fbd-5af0-4c24-8da0-feff1d623c00');
+        });
+
+        test('contains correct Allow-Origin CORS header', async () => {
+            scanEventsFn.mockResolvedValueOnce({ Items: [] });
+            scanEateriesFn.mockResolvedValueOnce({ Items: [] });
+            const result = await handler({
+                httpMethod: 'DELETE',
+                pathParameters: {
+                    uuid: 'be8c6fbd-5af0-4c24-8da0-feff1d623c00'
+                }
+            });
+
+            expect(result.headers).toHaveProperty('Access-Control-Allow-Origin', 'https://uwo-test-origin.io');
         });
 
         test('deletes events containing the buildings\'s UUID', async () => {

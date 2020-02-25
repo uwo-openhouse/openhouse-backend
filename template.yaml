@@ -1,27 +1,25 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  openhouse-backend
-
-  Backend SAM & Infrastructure
+Description: Backend SAM & Infrastructure
 
 Parameters:
   AdminUIBucketName:
     Type: String
-#  AdminUIDomainName:
-#    Type: String
-#  AdminUICertificateARN:
-#    Type: String
-#    NoEcho: true
   AdminUILoginSubDomain:
     Type: String
+  EnvType:
+    Type: String
+    Default: local
+
+Conditions:
+  IsLocal: !Equals [ !Ref EnvType, local ]
 
 Globals:
   Api:
     Cors:
       AllowMethods: "'OPTIONS,GET,POST,PUT,DELETE'"
       AllowHeaders: "'Content-Type, Authorization'"
-      AllowOrigin: "'*'"
+      AllowOrigin: !If [ IsLocal, "'*'", !Sub "'https://${AdminUICloudFrontDisturbution.DomainName}'" ]
     Auth:
       Authorizers:
         CognitoAuthorizer:
@@ -42,9 +40,10 @@ Globals:
     Environment:
       Variables:
         ENDPOINT_OVERRIDE: ""
+        ORIGIN: !Sub "https://${AdminUICloudFrontDisturbution.DomainName}"
 
 Resources:
-  # Admin UI Frontend Bucket Resources
+  ##################### Admin UI Frontend Bucket Resources #####################
 
   AdminUIBucket:
     Type: AWS::S3::Bucket
@@ -69,7 +68,7 @@ Resources:
               CanonicalUser: !GetAtt AdminUIOriginAccessIdentity.S3CanonicalUserId
             Resource: !GetAtt AdminUIBucket.Arn
 
-  # Admin UI CloudFront Resources
+  ##################### Admin UI Frontend CloudFront Resources #####################
 
   # Set policy to only allow access through CloudFront (HTTPS)
   AdminUIOriginAccessIdentity:
@@ -83,8 +82,6 @@ Resources:
     Properties:
       DistributionConfig:
         Enabled: true
-#        Aliases: TODO: Uncomment
-#          - !Ref AdminUIDomainName
         Origins:
           - DomainName: !GetAtt AdminUIBucket.DomainName
             Id: S3-AdminUI-site
@@ -101,12 +98,9 @@ Resources:
             ResponseCode: 200
             ResponsePagePath: /index.html
         ViewerCertificate:
-          CloudFrontDefaultCertificate: true # TODO: Remove & uncomment below
-#          AcmCertificateArn: !Ref AdminUICertificateARN
-#          MinimumProtocolVersion: TLSv1.2_2018
-#          SslSupportMethod: sni-only
+          CloudFrontDefaultCertificate: true
 
-  # Lambda Functions & API Events
+  ##################### Lambda Functions & API Events #####################
 
   BuildingsFunction:
     Type: AWS::Serverless::Function
@@ -435,7 +429,7 @@ Resources:
     DependsOn:
       - EventAttendeesTable
 
-  # DynamoDB Tables
+  ##################### DynamoDB Tables #####################
   # Remember to update local-test/env_*.json & setup_dynamo.js when adding/updating tables
 
   BuildingsTable:
@@ -522,7 +516,7 @@ Resources:
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
 
-  # Cognito resources for admin authorization & UI
+  ##################### Cognito resources for Admin UI auth #####################
 
   AdminPool:
     Type: AWS::Cognito::UserPool
@@ -548,10 +542,8 @@ Resources:
         - COGNITO
       CallbackURLs:
         - !Sub "https://${AdminUICloudFrontDisturbution.DomainName}/"
-#        - !Sub "https://${AdminUIDomainName}/" # TODO: Replace
       LogoutURLs:
         - !Sub "https://${AdminUICloudFrontDisturbution.DomainName}/"
-#        - !Sub "https://${AdminUIDomainName}/" # TODO: Replace
       AllowedOAuthFlows:
         - implicit
       AllowedOAuthScopes:
@@ -619,4 +611,3 @@ Outputs:
           - "uwo-openhouse-api/events:manage"
           - "uwo-openhouse-api/openhouses:manage"
         RedirectURI: !Sub "https://${AdminUICloudFrontDisturbution.DomainName}/"
-#        RedirectURI: !Sub "https://${AdminUIDomainName}/" # TODO: Replace
