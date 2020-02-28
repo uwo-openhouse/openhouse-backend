@@ -19,19 +19,29 @@ if (ENDPOINT_OVERRIDE) {
     ddb = new aws.DynamoDB.DocumentClient({ apiVersion: '2012-08-10' });
 }
 
+const BATCH_WRITE_MAX = 25;
+
 // Use dependency injection to allow for easier unit testing
 module.exports.handler = require('./handler.js')({
     dynamo: {
         scanEateries: () => ddb.scan({ TableName: EATERIES_TABLE }).promise(),
-        createEateries: (eateries) => ddb.batchWrite({
-            RequestItems: {
-                [EATERIES_TABLE]: eateries.map((eatery) => ({
-                    PutRequest: {
-                        Item: eatery
+        createEateries: (eateries) => {
+            const writePromises = [];
+
+            for (let i = 0; i < eateries.length; i += BATCH_WRITE_MAX) {
+                writePromises.push(ddb.batchWrite({
+                    RequestItems: {
+                        [EATERIES_TABLE]: eateries.slice(i, i + BATCH_WRITE_MAX).map((eatery) => ({
+                            PutRequest: {
+                                Item: eatery
+                            }
+                        }))
                     }
-                }))
+                }).promise());
             }
-        }).promise(),
+
+            return Promise.all(writePromises);
+        },
         putEatery: (item) => ddb.put({ TableName: EATERIES_TABLE, Item: item }).promise(),
         getEatery: (uuid) => ddb.get({ TableName: EATERIES_TABLE, Key: { uuid }}).promise(),
         deleteEatery: (uuid) => ddb.delete({ TableName: EATERIES_TABLE, Key: { uuid }}).promise(),
