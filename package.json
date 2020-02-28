@@ -10,6 +10,9 @@
     "start:win": "sam build && sam local start-api --env-vars local-test/env_win.json",
     "start:linux": "sam build && sam local start-api --env-vars local-test/env_linux.json"
   },
+  "jest": {
+    "modulePathIgnorePatterns": ["<rootDir>/.aws-sam/"]
+  },
   "devDependencies": {
     "aws-sdk": "^2.610.0",
     "jest": "^25.1.0",
