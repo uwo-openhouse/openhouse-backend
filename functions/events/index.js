@@ -23,6 +23,7 @@ if (ENDPOINT_OVERRIDE) {
 }
 
 const BATCH_WRITE_MAX = 25;
+const BATCH_READ_MAX = 100;
 
 // Use dependency injection to allow for easier unit testing
 module.exports.handler = require('./handler.js')({
@@ -66,13 +67,21 @@ module.exports.handler = require('./handler.js')({
 
             return Promise.all(writePromises);
         },
-        getEventAttendees: async (uuids) => (await ddb.batchGet({
-            RequestItems: {
-                [EVENT_ATTENDEES_TABLE]: {
-                    Keys: uuids.map((uuid) => ({ uuid }))
-                }
+        getEventAttendees: async (uuids) => {
+            const getPromises = [];
+
+            for (let i = 0; i < uuids.length; i += BATCH_READ_MAX) {
+                getPromises.push(ddb.batchGet({
+                    RequestItems: {
+                        [EVENT_ATTENDEES_TABLE]: {
+                            Keys: uuids.slice(i, i + BATCH_READ_MAX).map((uuid) => ({ uuid }))
+                        }
+                    }
+                }).promise());
             }
-        }).promise()).Responses[EVENT_ATTENDEES_TABLE],
+
+            return (await Promise.all(getPromises)).map((result) => result.Responses[EVENT_ATTENDEES_TABLE]).flat();
+        },
         putEventAttendees: (item) => ddb.put({ TableName: EVENT_ATTENDEES_TABLE, Item: item }).promise(),
         deleteEventAttendees: (uuid) => ddb.delete({ TableName: EVENT_ATTENDEES_TABLE, Key: { uuid }}).promise(),
 
