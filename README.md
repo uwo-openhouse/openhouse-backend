@@ -1,4 +1,4 @@
-# openhouse-backend ![Deploy to Prod](https://github.com/uwo-openhouse/openhouse-backend/workflows/Deploy%20to%20Prod/badge.svg?branch=master) ![Deploy to Test](https://github.com/uwo-openhouse/openhouse-backend/workflows/Deploy%20to%20Test/badge.svg?branch=develop)
+# openhouse-backend | ![Deploy to Prod](https://github.com/uwo-openhouse/openhouse-backend/workflows/Deploy%20to%20Prod/badge.svg?branch=master) ![Deploy to Test](https://github.com/uwo-openhouse/openhouse-backend/workflows/Deploy%20to%20Test/badge.svg?branch=develop)
 
 This repository contains all the code for the serverless backend using a SAM template. It defines any additional 
 infrastructure in the CloudFormation stack to support the project (e.g. databases).
