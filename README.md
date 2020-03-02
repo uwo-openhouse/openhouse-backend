@@ -1,11 +1,11 @@
-# openhouse-backend
+# openhouse-backend | ![Deploy to Prod](https://github.com/uwo-openhouse/openhouse-backend/workflows/Deploy%20to%20Prod/badge.svg?branch=master) ![Deploy to Test](https://github.com/uwo-openhouse/openhouse-backend/workflows/Deploy%20to%20Test/badge.svg?branch=develop)
 
 This repository contains all the code for the serverless backend using a SAM template. It defines any additional 
 infrastructure in the CloudFormation stack to support the project (e.g. databases).
 
 ## Initializing
 
-### Local requirements:
+### Local requirements
 
 - Node.js & [Yarn](https://yarnpkg.com/en/docs/install)
 - [SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
@@ -47,5 +47,3 @@ Run from the root of the project or lambda function directories:
 
 This application is continuously deployed on the `develop` to the test environment & `master` to the production
 environment.
-
-

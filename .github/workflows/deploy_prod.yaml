@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'functions/**'
+      - 'template.yaml'
 
 env:
   STACK_NAME: openhouse-backend
