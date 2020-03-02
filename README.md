@@ -3,6 +3,10 @@
 This repository contains all the code for the serverless backend using a SAM template. It defines any additional 
 infrastructure in the CloudFormation stack to support the project (e.g. databases).
 
+## Documentation
+
+For full documentation see the repository [wiki](https://github.com/uwo-openhouse/openhouse-backend/wiki).
+
 ## Initializing
 
 ### Local requirements
