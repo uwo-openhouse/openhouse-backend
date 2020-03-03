@@ -32,7 +32,9 @@ In another terminal run the setup script to configure necessary DynamoDB tables:
 ```
 $ yarn run setup-dynamo
 ```
-(Note: This must be re-run anytime the `yarn run dynamo` is restarted.)
+This must be re-run anytime the `yarn run dynamo` is restarted.
+(Note: Your AWS CLI credentials must be configured for this to work. They do not need to be valid however, dummy values
+will work.)
 
 Finally, run the one of following to build and run the API based on your own OS (& restart this whenever you make a change):
 
