@@ -8,7 +8,7 @@
     "setup-dynamo": "node local-test/setup_dynamo.js",
     "start:mac": "sam build && sam local start-api --env-vars local-test/env_mac.json",
     "start:win": "sam build && sam local start-api --env-vars local-test/env_win.json",
-    "start:linux": "sam build && sam local start-api --env-vars local-test/env_linux.json"
+    "start:linux": "sam build && sam local start-api --docker-network host --env-vars local-test/env_linux.json"
   },
   "jest": {
     "modulePathIgnorePatterns": ["<rootDir>/.aws-sam/"]
