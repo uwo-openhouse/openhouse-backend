@@ -35,7 +35,7 @@ Globals:
         ResponseTemplates:
           application/json: "{\"error\": $context.error.messageString }"
   Function:
-    Timeout: 10
+    Timeout: 40
     Runtime: nodejs12.x
     Environment:
       Variables:
