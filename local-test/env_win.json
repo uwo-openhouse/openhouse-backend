@@ -1,30 +1,30 @@
 {
     "AreasFunction": {
-        "ENDPOINT_OVERRIDE": "http://docker.for.windows.localhost:8000",
+        "ENDPOINT_OVERRIDE": "http://host.docker.internal:8000",
         "AREAS_TABLE": "OpenHouse-Areas",
         "EVENTS_TABLE": "OpenHouse-Events",
         "ORIGIN": "*"
     },
     "BuildingsFunction": {
-        "ENDPOINT_OVERRIDE": "http://docker.for.windows.localhost:8000",
+        "ENDPOINT_OVERRIDE": "http://host.docker.internal:8000",
         "BUILDINGS_TABLE": "OpenHouse-Buildings",
         "EATERIES_TABLE": "OpenHouse-Eateries",
         "EVENTS_TABLE": "OpenHouse-Events",
         "ORIGIN": "*"
     },
     "EateriesFunction": {
-        "ENDPOINT_OVERRIDE": "http://docker.for.windows.localhost:8000",
+        "ENDPOINT_OVERRIDE": "http://host.docker.internal:8000",
         "EATERIES_TABLE": "OpenHouse-Eateries",
         "BUILDINGS_TABLE": "OpenHouse-Buildings",
         "ORIGIN": "*"
     },
     "EventAttendeesFunction": {
-        "ENDPOINT_OVERRIDE": "http://docker.for.windows.localhost:8000",
+        "ENDPOINT_OVERRIDE": "http://host.docker.internal:8000",
         "TABLE_NAME": "OpenHouse-EventAttendees",
         "ORIGIN": "*"
     },
     "EventsFunction": {
-        "ENDPOINT_OVERRIDE": "http://docker.for.windows.localhost:8000",
+        "ENDPOINT_OVERRIDE": "http://host.docker.internal:8000",
         "EVENTS_TABLE": "OpenHouse-Events",
         "EVENT_ATTENDEES_TABLE": "OpenHouse-EventAttendees",
         "AREAS_TABLE": "OpenHouse-Areas",
@@ -33,14 +33,14 @@
         "ORIGIN": "*"
     },
     "OpenHousesFunction": {
-        "ENDPOINT_OVERRIDE": "http://docker.for.windows.localhost:8000",
+        "ENDPOINT_OVERRIDE": "http://host.docker.internal:8000",
         "OPEN_HOUSES_TABLE": "OpenHouse-OpenHouses",
         "OPEN_HOUSE_ATTENDEES_TABLE": "OpenHouse-OpenHouseAttendees",
         "EVENTS_TABLE": "OpenHouse-Events",
         "ORIGIN": "*"
     },
     "OpenHouseAttendeesFunction": {
-        "ENDPOINT_OVERRIDE": "http://docker.for.windows.localhost:8000",
+        "ENDPOINT_OVERRIDE": "http://host.docker.internal:8000",
         "TABLE_NAME": "OpenHouse-OpenHouseAttendees",
         "ORIGIN": "*"
     }
