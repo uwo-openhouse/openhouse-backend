@@ -11,7 +11,9 @@
     "start:linux": "sam build && sam local start-api --docker-network host --env-vars local-test/env_linux.json"
   },
   "jest": {
-    "modulePathIgnorePatterns": ["<rootDir>/.aws-sam/"]
+    "modulePathIgnorePatterns": [
+      "<rootDir>/.aws-sam/"
+    ]
   },
   "devDependencies": {
     "aws-sdk": "^2.610.0",
